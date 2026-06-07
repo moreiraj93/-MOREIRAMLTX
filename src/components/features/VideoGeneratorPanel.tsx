@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Video, RefreshCw, Sparkles, Download, Play, Pause, Clock, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Video, RefreshCw, Sparkles, Download, Play, Pause, Clock, Loader2, CheckCircle2, AlertCircle, History, Film } from 'lucide-react';
 import { VideoGenRequest } from '@/types/chat';
 import { createVideoTask, checkVideoTask } from '@/lib/mockAI';
+import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
 const STYLES: { value: VideoGenRequest['style']; label: string; desc: string; emoji: string }[] = [
@@ -41,8 +42,18 @@ const POLLING_STATUS_MESSAGES = [
 ];
 
 type TaskStatus = 'idle' | 'creating' | 'polling' | 'succeeded' | 'failed';
+type PanelMode = 'generate' | 'history';
+
+interface VideoHistoryItem {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: string;
+  size?: number;
+}
 
 export default function VideoGeneratorPanel() {
+  const [panelMode, setPanelMode] = useState<PanelMode>('generate');
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState<VideoGenRequest['style']>('cinematic');
   const [duration, setDuration] = useState<VideoGenRequest['duration']>('5s');
@@ -56,6 +67,10 @@ export default function VideoGeneratorPanel() {
   const [statusMsgIdx, setStatusMsgIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [historyItems, setHistoryItems] = useState<VideoHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [selectedHistoryVideo, setSelectedHistoryVideo] = useState<VideoHistoryItem | null>(null);
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const statusMsgRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -73,6 +88,46 @@ export default function VideoGeneratorPanel() {
   };
 
   useEffect(() => () => stopPolling(), []);
+
+  const loadVideoHistory = async () => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+
+    const { data, error } = await supabase.storage
+      .from('videos')
+      .list('', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
+
+    if (error) {
+      setHistoryItems([]);
+      setSelectedHistoryVideo(null);
+      setHistoryError(error.message);
+      setHistoryLoading(false);
+      return;
+    }
+
+    const videos = (data ?? [])
+      .filter(file => file.name.toLowerCase().endsWith('.mp4'))
+      .map(file => {
+        const { data: publicData } = supabase.storage.from('videos').getPublicUrl(file.name);
+        return {
+          id: file.id ?? file.name,
+          name: file.name,
+          url: publicData.publicUrl,
+          createdAt: file.created_at ?? file.updated_at ?? new Date().toISOString(),
+          size: file.metadata?.size as number | undefined,
+        };
+      });
+
+    setHistoryItems(videos);
+    setSelectedHistoryVideo(videos[0] ?? null);
+    setHistoryLoading(false);
+  };
+
+  useEffect(() => {
+    if (panelMode === 'history') {
+      loadVideoHistory();
+    }
+  }, [panelMode]);
 
   const startPolling = (id: string) => {
     videoUploadedRef.current = false;
@@ -101,6 +156,7 @@ export default function VideoGeneratorPanel() {
           stopPolling();
           setVideoUrl(task.videoUrl);
           setTaskStatus('succeeded');
+          if (panelMode === 'history') loadVideoHistory();
         } else if (task.status === 'failed') {
           stopPolling();
           setErrorMsg(task.error ?? 'Video generation failed');
@@ -146,11 +202,11 @@ export default function VideoGeneratorPanel() {
     setProgress(0);
   };
 
-  const handleDownload = () => {
-    if (!videoUrl) return;
+  const handleDownload = (url = videoUrl, name?: string) => {
+    if (!url) return;
     const a = document.createElement('a');
-    a.href = videoUrl;
-    a.download = `mocka-video-${Date.now()}.mp4`;
+    a.href = url;
+    a.download = name ?? `mockj-video-${Date.now()}.mp4`;
     a.target = '_blank';
     a.click();
   };
@@ -173,10 +229,16 @@ export default function VideoGeneratorPanel() {
     return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
   };
 
+  const formatSize = (size?: number) => {
+    if (!size) return 'Video file';
+    if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+    return `${(size / 1024 / 1024).toFixed(1)} MB`;
+  };
+
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full flex-col overflow-y-auto bg-[hsl(224_20%_6%)] md:flex-row md:overflow-hidden">
       {/* Left — Controls */}
-      <div className="w-80 shrink-0 border-r border-border bg-[hsl(224_20%_5%)] flex flex-col overflow-y-auto">
+      <div className="flex w-full shrink-0 flex-col border-b border-border bg-[hsl(224_20%_5%)] md:h-full md:w-80 md:border-b-0 md:border-r md:overflow-y-auto">
         <div className="p-5 space-y-5">
           {/* Header */}
           <div className="flex items-center gap-3">
@@ -191,8 +253,29 @@ export default function VideoGeneratorPanel() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-[hsl(224_15%_9%)] p-1">
+            {([
+              { mode: 'generate' as const, label: 'Generate', icon: Sparkles },
+              { mode: 'history' as const, label: 'Video History', icon: History },
+            ]).map(({ mode, label, icon: Icon }) => (
+              <button
+                key={mode}
+                onClick={() => setPanelMode(mode)}
+                className={cn(
+                  'flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-semibold transition-all duration-200',
+                  panelMode === mode
+                    ? 'border border-[hsl(191_97%_55%_/_0.4)] bg-[hsl(191_97%_55%_/_0.13)] text-[hsl(191_97%_60%)]'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* Prompt */}
-          <div className="space-y-2">
+          {panelMode === 'generate' && <div className="space-y-2">
             <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Scene Description</label>
             <textarea
               value={prompt}
@@ -214,10 +297,10 @@ export default function VideoGeneratorPanel() {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Style */}
-          <div className="space-y-2">
+          {panelMode === 'generate' && <div className="space-y-2">
             <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Visual Style</label>
             <div className="grid grid-cols-2 gap-1.5">
               {STYLES.map(s => (
@@ -236,10 +319,10 @@ export default function VideoGeneratorPanel() {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Duration */}
-          <div className="space-y-2">
+          {panelMode === 'generate' && <div className="space-y-2">
             <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Duration</label>
             <div className="grid grid-cols-3 gap-1.5">
               {DURATIONS.map(d => (
@@ -258,10 +341,10 @@ export default function VideoGeneratorPanel() {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Aspect Ratio */}
-          <div className="space-y-2">
+          {panelMode === 'generate' && <div className="space-y-2">
             <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Aspect Ratio</label>
             <div className="grid grid-cols-3 gap-1.5">
               {RATIOS.map(r => (
@@ -281,11 +364,33 @@ export default function VideoGeneratorPanel() {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
+
+          {panelMode === 'history' && (
+            <div className="space-y-3 rounded-xl border border-[hsl(191_97%_55%_/_0.18)] bg-[hsl(191_97%_55%_/_0.05)] p-4">
+              <div className="flex items-start gap-3">
+                <Film className="mt-0.5 h-4 w-4 text-[hsl(191_97%_60%)]" />
+                <div>
+                  <p className="text-xs font-bold text-foreground">Saved Sora videos</p>
+                  <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                    Loads generated MP4 files from the Supabase <span className="font-semibold text-[hsl(191_97%_62%)]">videos</span> bucket.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={loadVideoHistory}
+                disabled={historyLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-[hsl(191_97%_55%_/_0.3)] px-3 py-2 text-xs font-semibold text-[hsl(191_97%_62%)] transition hover:bg-[hsl(191_97%_55%_/_0.08)] disabled:opacity-50"
+              >
+                <RefreshCw className={cn('h-3.5 w-3.5', historyLoading && 'animate-spin')} />
+                Refresh History
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Generate button */}
-        <div className="mt-auto p-4 border-t border-border">
+        {panelMode === 'generate' && <div className="sticky bottom-0 z-20 mt-auto border-t border-border bg-[hsl(224_20%_5%_/_0.96)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur md:static">
           {isLoading ? (
             <button
               onClick={handleReset}
@@ -307,11 +412,132 @@ export default function VideoGeneratorPanel() {
               <Sparkles className="w-4 h-4" /> Generate Video
             </button>
           )}
-        </div>
+        </div>}
       </div>
 
       {/* Right — Preview */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[hsl(224_20%_6%)] overflow-y-auto">
+      <div className="flex min-h-[70svh] flex-1 flex-col items-center justify-center bg-[hsl(224_20%_6%)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 md:min-h-0 md:overflow-y-auto md:p-8">
+        {panelMode === 'history' && (
+          <div className="flex h-full w-full max-w-6xl flex-col gap-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-lg font-black text-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  Video History
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {historyItems.length} saved video{historyItems.length === 1 ? '' : 's'} in the videos bucket
+                </p>
+              </div>
+              <button
+                onClick={loadVideoHistory}
+                disabled={historyLoading}
+                className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground sm:mt-0"
+              >
+                <RefreshCw className={cn('h-3.5 w-3.5', historyLoading && 'animate-spin')} />
+                Refresh
+              </button>
+            </div>
+
+            {selectedHistoryVideo && (
+              <div className="overflow-hidden rounded-2xl border border-[hsl(191_97%_55%_/_0.28)] bg-black shadow-[0_0_40px_hsl(191_97%_55%_/_0.1)]">
+                <video
+                  key={selectedHistoryVideo.url}
+                  src={selectedHistoryVideo.url}
+                  controls
+                  playsInline
+                  className="h-[58svh] w-full object-contain md:h-[42vh]"
+                />
+              </div>
+            )}
+
+            {historyLoading && (
+              <div className="flex min-h-64 items-center justify-center rounded-2xl border border-border bg-[hsl(224_15%_9%)]">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin text-[hsl(191_97%_55%)]" />
+                  Loading videos...
+                </div>
+              </div>
+            )}
+
+            {!historyLoading && historyError && (
+              <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5 text-center">
+                <AlertCircle className="mx-auto mb-2 h-6 w-6 text-destructive" />
+                <p className="text-sm font-semibold text-destructive">Could not load video history</p>
+                <p className="mt-1 text-xs text-muted-foreground">{historyError}</p>
+              </div>
+            )}
+
+            {!historyLoading && !historyError && historyItems.length === 0 && (
+              <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-border bg-[hsl(224_15%_9%)] p-6 text-center">
+                <History className="mb-3 h-8 w-8 text-[hsl(191_97%_55%_/_0.55)]" />
+                <p className="text-sm font-semibold text-foreground">No saved videos yet</p>
+                <p className="mt-1 max-w-sm text-xs leading-5 text-muted-foreground">
+                  Generate a Sora video and MockJ will store the finished MP4 in the Supabase videos bucket.
+                </p>
+              </div>
+            )}
+
+            {!historyLoading && historyItems.length > 0 && (
+              <div className="grid max-h-[80svh] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+                {historyItems.map(item => (
+                  <div
+                    key={item.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedHistoryVideo(item)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedHistoryVideo(item);
+                      }
+                    }}
+                    className={cn(
+                      'group cursor-pointer overflow-hidden rounded-xl border bg-[hsl(224_15%_9%)] text-left transition hover:-translate-y-0.5 hover:border-[hsl(191_97%_55%_/_0.38)] focus:outline-none focus:ring-2 focus:ring-[hsl(191_97%_55%_/_0.45)]',
+                      selectedHistoryVideo?.id === item.id ? 'border-[hsl(191_97%_55%_/_0.55)]' : 'border-border'
+                    )}
+                  >
+                    <div className="relative aspect-video bg-black">
+                      <video
+                        src={item.url}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/18">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(191_97%_55%_/_0.9)] shadow-[0_0_24px_hsl(191_97%_55%_/_0.45)]">
+                          <Play className="ml-0.5 h-4 w-4 text-[hsl(224_20%_6%)]" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 p-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-bold text-foreground">{item.name}</p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          {formatSize(item.size)} · {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleDownload(item.url, item.name);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(191_97%_55%_/_0.32)] px-2.5 py-1.5 text-[10px] font-semibold text-[hsl(191_97%_62%)] transition hover:bg-[hsl(191_97%_55%_/_0.1)]"
+                      >
+                        <Download className="h-3 w-3" />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {panelMode === 'generate' && (
+        <>
         {/* IDLE */}
         {taskStatus === 'idle' && (
           <div className="text-center max-w-sm">
@@ -333,11 +559,11 @@ export default function VideoGeneratorPanel() {
 
         {/* LOADING */}
         {(taskStatus === 'creating' || taskStatus === 'polling') && (
-          <div className="w-full max-w-lg space-y-5 animate-message-in">
+          <div className="w-full max-w-lg space-y-5 animate-message-in md:max-w-xl">
             {/* Animated video placeholder */}
             <div
               className="w-full animate-shimmer rounded-2xl overflow-hidden border border-[hsl(191_97%_55%_/_0.15)] flex items-center justify-center"
-              style={{ aspectRatio: ratio.replace(':', '/'), maxHeight: '400px', minHeight: '200px' }}
+              style={{ aspectRatio: ratio.replace(':', '/'), maxHeight: 'min(68svh, 460px)', minHeight: '220px' }}
             >
               <div className="flex flex-col items-center gap-3">
                 <div className="w-14 h-14 rounded-full border-2 border-[hsl(191_97%_55%_/_0.3)] border-t-[hsl(191_97%_55%)] animate-spin" />
@@ -385,8 +611,8 @@ export default function VideoGeneratorPanel() {
 
         {/* SUCCEEDED */}
         {taskStatus === 'succeeded' && videoUrl && (
-          <div className="w-full max-w-lg animate-message-in space-y-4">
-            <div className="rounded-2xl overflow-hidden border border-[hsl(191_97%_55%_/_0.3)] shadow-[0_0_40px_hsl(191_97%_55%_/_0.1)] bg-black relative">
+          <div className="w-full max-w-3xl animate-message-in space-y-4">
+            <div className="relative h-[68svh] overflow-hidden rounded-2xl border border-[hsl(191_97%_55%_/_0.3)] bg-black shadow-[0_0_40px_hsl(191_97%_55%_/_0.1)] md:h-auto">
               <video
                 ref={videoRef}
                 src={videoUrl}
@@ -394,8 +620,8 @@ export default function VideoGeneratorPanel() {
                 playsInline
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
-                className="w-full object-contain"
-                style={{ maxHeight: '450px' }}
+                className="h-full w-full object-contain md:h-auto"
+                style={{ maxHeight: 'min(72svh, 560px)' }}
               />
               {/* Play overlay when paused */}
               {!isPlaying && (
@@ -465,6 +691,8 @@ export default function VideoGeneratorPanel() {
               <RefreshCw className="w-4 h-4" /> Try Again
             </button>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>
