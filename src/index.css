@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 224 20% 6%;
+    --foreground: 210 20% 96%;
+
+    --card: 224 18% 9%;
+    --card-foreground: 210 20% 96%;
+
+    --popover: 224 18% 9%;
+    --popover-foreground: 210 20% 96%;
+
+    --primary: 4 90% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 224 15% 14%;
+    --secondary-foreground: 210 20% 96%;
+
+    --muted: 224 15% 14%;
+    --muted-foreground: 215 15% 55%;
+
+    --accent: 265 80% 65%;
+    --accent-foreground: 210 20% 96%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 224 15% 16%;
+    --input: 224 15% 14%;
+    --ring: 4 90% 58%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 224 20% 5%;
+    --sidebar-foreground: 210 20% 85%;
+    --sidebar-primary: 4 90% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 224 15% 12%;
+    --sidebar-accent-foreground: 210 20% 96%;
+    --sidebar-border: 224 15% 13%;
+    --sidebar-ring: 4 90% 58%;
+
+    --red-glow: 4 90% 58%;
+    --violet-accent: 265 80% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(224 20% 6%);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(224 15% 20%);
+    border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(4 90% 58% / 0.5);
+  }
+}
+
+@layer utilities {
+  .glow-red {
+    box-shadow: 0 0 20px hsl(4 90% 58% / 0.4), 0 0 50px hsl(4 90% 58% / 0.15);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px hsl(4 90% 58% / 0.4), 0 0 50px hsl(4 90% 58% / 0.15);
+  }
+
+  .glow-violet {
+    box-shadow: 0 0 20px hsl(265 80% 65% / 0.3), 0 0 40px hsl(265 80% 65% / 0.1);
+  }
+
+  .text-glow-red {
+    text-shadow: 0 0 24px hsl(4 90% 58% / 0.9), 0 0 48px hsl(4 90% 58% / 0.4);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 24px hsl(4 90% 58% / 0.9), 0 0 48px hsl(4 90% 58% / 0.4);
+  }
+
+  .border-glow-red {
+    border-color: hsl(4 90% 58% / 0.5);
+    box-shadow: 0 0 14px hsl(4 90% 58% / 0.25);
+  }
+
+  .border-glow-cyan {
+    border-color: hsl(4 90% 58% / 0.5);
+    box-shadow: 0 0 14px hsl(4 90% 58% / 0.25);
+  }
+
+  .glass-panel {
+    background: hsl(224 18% 9% / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(224 15% 16%);
+  }
+}
+
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+@keyframes message-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 12px hsl(4 90% 58% / 0.25); }
+  50% { box-shadow: 0 0 30px hsl(4 90% 58% / 0.6), 0 0 60px hsl(4 90% 58% / 0.2); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-message-in {
+  animation: message-in 0.25s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, hsl(224 15% 14%) 25%, hsl(224 15% 20%) 50%, hsl(224 15% 14%) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes waveform-bar {
+  0%, 100% { transform: scaleY(0.2); opacity: 0.5; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.waveform-bar {
+  display: inline-block;
+  width: 2px;
+  border-radius: 9999px;
+  background: hsl(4 90% 58%);
+  transform-origin: bottom;
+  animation: waveform-bar 0.9s ease-in-out infinite;
+}
+.waveform-bar:nth-child(1) { animation-delay: 0s;    height: 6px; }
+.waveform-bar:nth-child(2) { animation-delay: 0.15s; height: 10px; }
+.waveform-bar:nth-child(3) { animation-delay: 0.3s;  height: 8px; }
+.waveform-bar:nth-child(4) { animation-delay: 0.45s; height: 10px; }
+.waveform-bar:nth-child(5) { animation-delay: 0.6s;  height: 6px; }
