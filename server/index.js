@@ -210,7 +210,21 @@ app.post('/api/check-subscription', async (req, res) => {
     const user = await requireUser(req);
     const stripe = stripeClient();
     const match = await findActiveSubscription(stripe, user.email);
-    res.json(subscriptionPayload(match));
+    const payload = subscriptionPayload(match);
+    try {
+      await supabaseAdminClient().auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...(user.user_metadata || {}),
+          subscribed: payload.subscribed,
+          subscription_active: payload.subscribed,
+          subscription_tier: payload.tier,
+          subscription_end: payload.subscription_end,
+        },
+      });
+    } catch (metadataError) {
+      console.warn('Failed to mirror subscription metadata:', metadataError.message);
+    }
+    res.json(payload);
   } catch (error) {
     const status = error.statusCode || 500;
     res.status(status).json({ error: error.message || 'Failed to check subscription' });

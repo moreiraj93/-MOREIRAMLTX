@@ -26,6 +26,7 @@ export interface ImageGenRequest {
   style: 'realistic' | 'artistic' | 'anime' | 'sketch' | 'cyberpunk' | 'watercolor' | 'oil' | '3d';
   aspectRatio: '1:1' | '16:9' | '9:16' | '4:3';
   quality?: string;
+  modelVersion?: string;
   sourceImageDataUrl?: string; // for image editing
 }
 

@@ -54,7 +54,7 @@ const FAQS = [
   },
   {
     q: 'Is MockJ 4 free to use?',
-    a: 'Yes — MockJ offers a free tier with 10 chat messages, 3 image generations, and 1 video per day. MockJ Pro (from $50.99/mo) gives you unlimited access to all features including voice, advanced image tools, and priority AI models.',
+    a: 'Yes — MockJ offers a free tier with 10 chat messages, 10 signed-in image generations, and 1 video per day. MockJ Pro (from $50.99/mo) gives you unlimited access to all features including voice, advanced image tools, and priority AI models.',
   },
   {
     q: 'Can I use generated images commercially?',
@@ -72,7 +72,7 @@ const PLANS = [
     price: '$0',
     period: '',
     highlight: false,
-    features: ['10 chat messages / day', '3 image generations / day', '1 video / day', 'Basic voice input', 'Project Brain (read-only)', 'Community support'],
+    features: ['10 chat messages / day', '10 signed-in image credits', '1 video / day', 'Basic voice input', 'Project Brain (read-only)', 'Community support'],
   },
   {
     name: 'Pro',

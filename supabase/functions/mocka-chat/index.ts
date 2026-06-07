@@ -20,6 +20,7 @@ interface ImageRequestBody {
   style?: string;
   aspectRatio?: string;
   quality?: string;
+  modelVersion?: string;
   sourceImageDataUrl?: string;
 }
 
@@ -39,16 +40,16 @@ interface VideoCheckBody {
 type RequestBody = ChatRequestBody | ImageRequestBody | VideoCreateBody | VideoCheckBody;
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Rate limits for free users (per day, server-side enforced)
+// Rate limits for free users (server-side enforced)
 // ──────────────────────────────────────────────────────────────────────────────
-const FREE_LIMITS = { chat: 10, image: 3, video: 1 };
+const FREE_LIMITS = { chat: 10, image: 10, video: 1 };
 type ActionType = 'chat' | 'image' | 'video';
 
 /**
  * Check and increment usage for an authenticated free user.
  * Returns { allowed: true } or { allowed: false, remaining: 0 }.
  * Pro/subscribed users: always allowed (check-subscription verifies this).
- * Guests (no JWT): gated by localStorage client-side only.
+ * Guests (no JWT): blocked for image generation.
  */
 async function checkAndIncrementUsage(
   supabaseAdmin: ReturnType<typeof createClient>,
@@ -68,7 +69,45 @@ async function checkAndIncrementUsage(
     { onConflict: 'user_id,date', ignoreDuplicates: true }
   );
 
-  // Read current count
+  if (action === 'image') {
+    const { data: rows, error: rowsError } = await supabaseAdmin
+      .from('user_daily_usage')
+      .select('image_count')
+      .eq('user_id', userId);
+
+    if (rowsError) {
+      console.error('Image usage check error:', rowsError.message);
+      return { allowed: true, remaining: limit }; // fail open
+    }
+
+    const lifetimeCount = (rows ?? []).reduce((sum, row) => sum + ((row.image_count as number) ?? 0), 0);
+    if (lifetimeCount >= limit) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('user_daily_usage')
+      .select(col)
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
+
+    if (error || !data) {
+      console.error('Usage check error:', error?.message);
+      return { allowed: true, remaining: Math.max(0, limit - lifetimeCount) };
+    }
+
+    const current = (data as Record<string, number>)[col] ?? 0;
+    await supabaseAdmin
+      .from('user_daily_usage')
+      .update({ [col]: current + 1 })
+      .eq('user_id', userId)
+      .eq('date', today);
+
+    return { allowed: true, remaining: Math.max(0, limit - lifetimeCount - 1) };
+  }
+
+  // Read current daily count
   const { data, error } = await supabaseAdmin
     .from('user_daily_usage')
     .select(col)
@@ -153,6 +192,13 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    if (body.type === 'image' && !userId) {
+      return new Response(
+        JSON.stringify({ error: 'Sign in required to use MockJ Image Studio.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // VIDEO — CHECK STATUS (no rate limit needed for status checks)
     // ──────────────────────────────────────────────────────────────────────────
@@ -233,8 +279,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // SERVER-SIDE RATE LIMITING (for authenticated users only)
-    // Guests are gated client-side in useUsageLimits.ts
+    // SERVER-SIDE RATE LIMITING
     // ──────────────────────────────────────────────────────────────────────────
     if (userId && body.type !== 'video-check') {
       const action: ActionType =
@@ -248,9 +293,12 @@ Deno.serve(async (req: Request) => {
 
       if (!allowed) {
         console.log(`mocka-chat: rate limit hit for user ${userId}, action=${action}`);
+        const limitMessage = action === 'image'
+          ? 'You used all 10 free image credits. Subscribe monthly to keep generating.'
+          : `Daily limit reached for ${action}. Upgrade to MockJ Pro for unlimited access.`;
         return new Response(
           JSON.stringify({
-            error: `Daily limit reached for ${action}. Upgrade to MockJ Pro for unlimited access.`,
+            error: limitMessage,
             limitExceeded: true,
             action,
             remaining: 0,
@@ -266,7 +314,14 @@ Deno.serve(async (req: Request) => {
     // IMAGE GENERATION / EDITING
     // ──────────────────────────────────────────────────────────────────────────
     if (body.type === 'image') {
-      const { prompt, style = 'realistic', aspectRatio = '1:1', quality = '1K', sourceImageDataUrl } = body;
+      const {
+        prompt,
+        style = 'realistic',
+        aspectRatio = '1:1',
+        quality = '1K',
+        modelVersion = 'gemini-2.5-flash-image',
+        sourceImageDataUrl,
+      } = body;
 
       if (!prompt?.trim()) {
         return new Response(
@@ -284,12 +339,25 @@ Deno.serve(async (req: Request) => {
       };
 
       const styleHint = styleGuides[style] ?? styleGuides.realistic;
+      const modelGuides: Record<string, string> = {
+        'gemini-2.5-flash-image': 'MockJ native Gemini 2.5 Flash Image profile: fast, prompt-faithful, clean commercial output',
+        'hf-flux-dev': 'Hugging Face FLUX.1 dev profile: high detail, cinematic lighting, strong prompt adherence',
+        'hf-flux-schnell': 'Hugging Face FLUX.1 schnell profile: fast iteration, bold composition, clean edges',
+        'hf-sdxl': 'Hugging Face Stable Diffusion XL profile: polished general image generation, balanced realism and art direction',
+        'hf-sd35-large': 'Hugging Face Stable Diffusion 3.5 Large profile: premium photoreal detail, accurate textures, editorial finish',
+        'hf-playground-v25': 'Hugging Face Playground v2.5 profile: graphic polish, vibrant color, social-ready creative direction',
+        'hf-dreamshaper-xl': 'Hugging Face DreamShaper XL profile: stylized fantasy, portrait, and concept art finish',
+        'hf-realvis-xl': 'Hugging Face RealVisXL profile: realistic human portraits, product lighting, natural camera feel',
+        'hf-openjourney': 'Hugging Face OpenJourney profile: cinematic concept-art composition and dramatic painterly detail',
+        'hf-kandinsky-3': 'Hugging Face Kandinsky 3 profile: expressive art direction, rich color, surreal editorial mood',
+      };
+      const modelHint = modelGuides[modelVersion] ?? modelGuides['gemini-2.5-flash-image'];
       const isEditing = !!sourceImageDataUrl;
       const enhancedPrompt = isEditing
-        ? `Edit this image: ${prompt}. Apply the change naturally and realistically. Preserve the overall composition except for the described changes.`
-        : `${prompt}. Style: ${styleHint}.`;
+        ? `Edit this image: ${prompt}. Apply the change naturally and realistically. Preserve the overall composition except for the described changes. ${modelHint}.`
+        : `${prompt}. Style: ${styleHint}. ${modelHint}.`;
 
-      console.log(`mocka-image (${isEditing ? 'edit' : 'generate'}): "${enhancedPrompt.slice(0, 80)}...", ratio=${aspectRatio}, quality=${quality}`);
+      console.log(`mocka-image (${isEditing ? 'edit' : 'generate'}): "${enhancedPrompt.slice(0, 80)}...", ratio=${aspectRatio}, quality=${quality}, modelVersion=${modelVersion}`);
 
       type ContentPart =
         | { type: 'text'; text: string }

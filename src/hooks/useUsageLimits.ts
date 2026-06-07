@@ -8,13 +8,14 @@ interface DailyUsage {
   chat: number;
   image: number;
   video: number;
+  imageLifetime?: number;
 }
 
 const STORAGE_KEY = 'mockj_daily_usage';
 
 const FREE_LIMITS: Record<LimitedAction, number> = {
   chat: 10,
-  image: 3,
+  image: 10,
   video: 1,
 };
 
@@ -25,15 +26,15 @@ function todayStr(): string {
 function loadUsage(): DailyUsage {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { date: todayStr(), chat: 0, image: 0, video: 0 };
+    if (!raw) return { date: todayStr(), chat: 0, image: 0, video: 0, imageLifetime: 0 };
     const parsed: DailyUsage = JSON.parse(raw);
     // Reset if it's a new day
     if (parsed.date !== todayStr()) {
-      return { date: todayStr(), chat: 0, image: 0, video: 0 };
+      return { date: todayStr(), chat: 0, image: 0, video: 0, imageLifetime: parsed.imageLifetime ?? parsed.image ?? 0 };
     }
-    return parsed;
+    return { ...parsed, imageLifetime: parsed.imageLifetime ?? parsed.image ?? 0 };
   } catch {
-    return { date: todayStr(), chat: 0, image: 0, video: 0 };
+    return { date: todayStr(), chat: 0, image: 0, video: 0, imageLifetime: 0 };
   }
 }
 
@@ -48,6 +49,9 @@ export function useUsageLimits() {
     (action: LimitedAction): number => {
       if (subscription.subscribed) return Infinity;
       const usage = loadUsage();
+      if (action === 'image') {
+        return Math.max(0, FREE_LIMITS.image - (usage.imageLifetime ?? 0));
+      }
       return Math.max(0, FREE_LIMITS[action] - usage[action]);
     },
     [subscription.subscribed]
@@ -61,6 +65,12 @@ export function useUsageLimits() {
     (action: LimitedAction): boolean => {
       if (subscription.subscribed) return true;
       const usage = loadUsage();
+      if (action === 'image') {
+        const used = usage.imageLifetime ?? 0;
+        if (used >= FREE_LIMITS.image) return false;
+        saveUsage({ ...usage, image: usage.image + 1, imageLifetime: used + 1 });
+        return true;
+      }
       if (usage[action] >= FREE_LIMITS[action]) return false;
       saveUsage({ ...usage, [action]: usage[action] + 1 });
       return true;
@@ -71,6 +81,7 @@ export function useUsageLimits() {
   const getLimitLabel = (action: LimitedAction): string => {
     const remaining = getRemaining(action);
     if (remaining === Infinity) return '';
+    if (action === 'image') return `${remaining}/${FREE_LIMITS.image} free image credits left`;
     return `${remaining}/${FREE_LIMITS[action]} free ${action === 'chat' ? 'messages' : action === 'image' ? 'images' : 'videos'} left today`;
   };
 

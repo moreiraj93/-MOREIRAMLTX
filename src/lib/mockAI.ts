@@ -137,6 +137,7 @@ export async function generateImage(request: ImageGenRequest): Promise<string> {
       style: request.style,
       aspectRatio: request.aspectRatio,
       quality: request.quality ?? '1K',
+      modelVersion: request.modelVersion,
       sourceImageDataUrl: request.sourceImageDataUrl,
     },
   });

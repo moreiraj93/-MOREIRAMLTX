@@ -56,7 +56,7 @@ export default function Index() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { subscription, user } = useAuth();
   const navigate = useNavigate();
-  const { consumeOrBlock, getLimitLabel } = useUsageLimits();
+  const { consumeOrBlock, getRemaining, getLimitLabel } = useUsageLimits();
   const { tokenBalance, tokenCosts, canSpendTokens, spendTokens } = useTokenWallet();
 
   // Sync conversations from cloud when user logs in
@@ -123,18 +123,31 @@ export default function Index() {
   const handleSend = async (text: string) => {
     const action: TokenAction = chatMode === 'image' ? 'image' : chatMode === 'video' ? 'video' : 'chat';
 
-    if (!canSpendTokens(action)) {
-      toast.error(`Not enough MLTX tokens. ${tokenCosts[action]} needed for ${action}.`);
-      setShowPricing(true);
+    if (action === 'image' && !user) {
+      toast.error('Sign in required to use MockJ Image Studio.');
+      navigate('/auth');
       return;
     }
 
-    // Gate free users on daily limits
-    if (!consumeOrBlock(action)) {
-      const label = getLimitLabel(action);
-      toast.error(`Daily limit reached (${label.split('/')[1]?.split(' ')[0] ?? ''} free/day). Upgrade to MockJ Pro for unlimited access.`);
-      setShowPricing(true);
-      return;
+    if (!subscription.subscribed) {
+      if (!canSpendTokens(action)) {
+        toast.error(`Not enough MLTX tokens. ${tokenCosts[action]} needed for ${action}.`);
+        setShowPricing(true);
+        return;
+      }
+
+      if (action === 'image') {
+        if (getRemaining('image') <= 0) {
+          toast.error('You used all 10 free image credits. Subscribe monthly to keep generating.');
+          setShowPricing(true);
+          return;
+        }
+      } else if (!consumeOrBlock(action)) {
+        const label = getLimitLabel(action);
+        toast.error(`Daily limit reached (${label.split('/')[1]?.split(' ')[0] ?? ''} free/day). Upgrade to MockJ Pro for unlimited access.`);
+        setShowPricing(true);
+        return;
+      }
     }
     let convId = activeId;
     let convs = conversations;
@@ -230,7 +243,7 @@ export default function Index() {
           };
         });
         persist(convs, convs.find(c => c.id === convId));
-        spendTokens('chat');
+        if (!subscription.subscribed) spendTokens('chat');
 
       } else if (chatMode === 'image') {
         const imageUrl = await generateImage({ prompt: text, style: 'realistic', aspectRatio: '1:1', quality: '1K' });
@@ -239,7 +252,10 @@ export default function Index() {
           c.id === convId ? { ...c, messages: [...c.messages, aiMsg], updatedAt: new Date() } : c
         );
         persist(convs, convs.find(c => c.id === convId));
-        spendTokens('image');
+        if (!subscription.subscribed) {
+          consumeOrBlock('image');
+          spendTokens('image');
+        }
       } else if (chatMode === 'video') {
         const videoResult = await generateVideo({ prompt: text, style: 'cinematic', duration: '10s' });
         const aiMsg = buildMessage(
@@ -253,7 +269,7 @@ export default function Index() {
           c.id === convId ? { ...c, messages: [...c.messages, aiMsg], updatedAt: new Date() } : c
         );
         persist(convs, convs.find(c => c.id === convId));
-        spendTokens('video');
+        if (!subscription.subscribed) spendTokens('video');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';

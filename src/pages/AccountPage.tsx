@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import logoImg from '@/assets/mockj-logo.png';
 
-const FREE_LIMITS = { chat: 10, image: 3, video: 1 };
+const FREE_LIMITS = { chat: 10, image: 10, video: 1 };
 
 function UsageMeter({
   label,

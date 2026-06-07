@@ -166,7 +166,7 @@ export const STATIC_KNOWLEDGE_BASE: KnowledgeEntry[] = [
     category: 'ai',
     title: 'MockJ AI — Overview',
     keywords: ['mockj', 'mockj ai', 'mockj assistant', 'mock a', 'mocka', 'ai assistant'],
-    content: `MockJ is MLTX's flagship AI assistant — a next-generation conversational AI built to be smarter, more personable, and more useful than existing models. Powered by Google Gemini 3 Flash Preview via the OnSpace AI platform. Features include: streaming chat with Deep Reasoning mode, image generation (Gemini 2.5 Flash Image), video generation (Sora 2), voice input via Web Speech API, personality presets (Chill Bro, Sigma Grindset, Professor Mode, Creative Genius), prompt library with 20+ presets, and a full subscription system.`,
+    content: `MockJ is MLTX's flagship AI assistant — a next-generation conversational AI built to be smarter, more personable, and more useful than existing models. Powered by Google Gemini 3 Flash Preview via the OnSpace AI platform. Features include: streaming chat with Deep Reasoning mode, image generation with MockJ native and Hugging Face-inspired version profiles (Gemini 2.5 Flash Image, FLUX, Stable Diffusion XL/3.5, Playground, DreamShaper, RealVisXL, OpenJourney, Kandinsky), video generation (Sora 2), voice input via Web Speech API, personality presets (Chill Bro, Sigma Grindset, Professor Mode, Creative Genius), prompt library with 20+ presets, and a full subscription system.`,
     lastUpdated: '2026-06',
   },
   {
@@ -188,7 +188,7 @@ Personalities are stored in localStorage and injected as system prompt overrides
     title: 'MockJ — Pricing & Plans',
     keywords: ['mockj pricing', 'mockj pro', 'mockj subscription', 'mockj plans', 'mockj cost', 'mockj free', 'upgrade mockj', 'mockj intro'],
     content: `MockJ offers two paid plans and a free tier:
-FREE TIER: 10 chat messages/day, 3 image generations/day, 1 video generation/day. After hitting limits, a paywall modal prompts upgrade.
+FREE TIER: 10 chat messages/day, 10 signed-in image generation credits, 1 video generation/day. After hitting image credits or daily limits, a paywall modal prompts upgrade.
 MOCKJ PRO ($50.99/month): Unlimited AI chat with Deep Reasoning, all image generation styles, video generation with Sora 2, all personality presets, priority response speed, unlimited export & history. Checkout via Stripe payment link.
 MOCKJ INTRO ($2.99/month): Introductory rate — unlimited chat, standard image generation, video generation, personality presets, chat export.
 Billing is monthly via Stripe. Cancel any time through the subscription portal. Post-checkout, a WelcomeProModal confirms the active plan and renewal date.`,
