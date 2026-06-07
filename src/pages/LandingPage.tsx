@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import logoImg from '@/assets/mockj-logo.png';
 import heroBg from '@/assets/mocka-hero-bg.jpg';
+import PricingModal from '@/components/features/PricingModal';
 import { cn } from '@/lib/utils';
 
 const RED = 'hsl(4 90% 58%)';
@@ -145,6 +146,16 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [showPricing, setShowPricing] = useState(false);
+
+  const handlePlanClick = (planName: string) => {
+    if (planName === 'Free') {
+      navigate('/');
+      return;
+    }
+
+    setShowPricing(true);
+  };
 
   return (
     <div className="min-h-screen bg-[hsl(224_20%_4%)] text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -310,14 +321,14 @@ export default function LandingPage() {
                   ))}
                 </ul>
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => handlePlanClick(plan.name)}
                   className="w-full py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95"
                   style={plan.highlight
                     ? { background: `linear-gradient(135deg, ${RED}, hsl(20 90% 55%))`, color: '#fff', boxShadow: `0 0 20px hsl(4 90% 58% / 0.3)` }
                     : { background: 'hsl(224 15% 14%)', color: 'hsl(210 20% 80%)', border: '1px solid hsl(224 15% 20%)' }
                   }
                 >
-                  {plan.name === 'Free' ? 'Get Started Free' : `Upgrade to ${plan.name}`}
+                  {plan.name === 'Free' ? 'Launch MockJ Free' : `Open ${plan.name} Checkout`}
                 </button>
               </div>
             ))}
@@ -380,6 +391,8 @@ export default function LandingPage() {
           <p className="text-xs text-muted-foreground/50">© 2025 MockJ · Built Different 🔥</p>
         </div>
       </footer>
+
+      {showPricing && <PricingModal onClose={() => setShowPricing(false)} />}
     </div>
   );
 }
