@@ -53,7 +53,7 @@ serve(async (req: Request) => {
       logStep("Existing customer found", { customerId });
     }
 
-    const origin = req.headers.get("origin") || "https://mockj.onspace.app";
+    const origin = req.headers.get("origin") || "https://mockk.online";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

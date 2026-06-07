@@ -42,7 +42,7 @@ serve(async (req: Request) => {
     const customerId = customers.data[0].id;
     logStep("Customer found", { customerId });
 
-    const origin = req.headers.get("origin") || "https://mockj.onspace.app";
+    const origin = req.headers.get("origin") || "https://mockk.online";
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/`,
