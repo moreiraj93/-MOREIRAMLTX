@@ -123,10 +123,10 @@ export default function Sidebar({
             <div className="flex-1 flex items-center justify-between">
               <div>
                 <h1 className="font-bold text-base text-foreground leading-none flex items-baseline gap-1" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                  MockJ
+                  MockJ AI
                   <span className="text-xs font-black" style={{ color: 'hsl(4 90% 58%)', textShadow: '0 0 10px hsl(4 90% 58% / 0.6)' }}>4</span>
                 </h1>
-                <p className="text-[10px] mt-0.5 leading-none" style={{ color: 'hsl(4 90% 58%)' }}>AI Copilot · Built Different 🔥</p>
+                <p className="text-[10px] mt-0.5 leading-none" style={{ color: 'hsl(4 90% 58%)' }}>MoreiraJ / MLTX · Crew</p>
               </div>
               {/* Mobile close button */}
               {onMobileClose && (
@@ -423,7 +423,7 @@ export default function Sidebar({
         {/* Footer */}
         {!collapsed && (
           <div className="px-4 py-2 pb-3">
-            <p className="text-[10px] text-muted-foreground opacity-50 text-center">MockJ v2.0 · Built Different 🔥</p>
+            <p className="text-[10px] text-muted-foreground opacity-50 text-center">MockJ AI · MoreiraJ · MLTX</p>
           </div>
         )}
       </aside>

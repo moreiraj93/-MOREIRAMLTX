@@ -16,9 +16,32 @@ interface ChatWindowProps {
   deepReasoning?: boolean;
   onDeepReasoningChange?: (val: boolean) => void;
   onOpenImageStudio?: () => void;
+  onOpenVideoStudio?: () => void;
+  onOpenProjectBrain?: () => void;
+  onOpenPromptLibrary?: () => void;
+  onOpenPricing?: () => void;
+  onOpenAccount?: () => void;
+  onOpenGallery?: () => void;
 }
 
-export default function ChatWindow({ messages, isTyping, mode, onModeChange, onSend, pendingPrompt, onPendingPromptConsumed, deepReasoning, onDeepReasoningChange, onOpenImageStudio }: ChatWindowProps) {
+export default function ChatWindow({
+  messages,
+  isTyping,
+  mode,
+  onModeChange,
+  onSend,
+  pendingPrompt,
+  onPendingPromptConsumed,
+  deepReasoning,
+  onDeepReasoningChange,
+  onOpenImageStudio,
+  onOpenVideoStudio,
+  onOpenProjectBrain,
+  onOpenPromptLibrary,
+  onOpenPricing,
+  onOpenAccount,
+  onOpenGallery,
+}: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,7 +53,16 @@ export default function ChatWindow({ messages, isTyping, mode, onModeChange, onS
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 && !isTyping ? (
-          <WelcomeScreen onSuggestion={onSend} onOpenImageStudio={onOpenImageStudio} />
+          <WelcomeScreen
+            onSuggestion={onSend}
+            onOpenImageStudio={onOpenImageStudio}
+            onOpenVideoStudio={onOpenVideoStudio}
+            onOpenProjectBrain={onOpenProjectBrain}
+            onOpenPromptLibrary={onOpenPromptLibrary}
+            onOpenPricing={onOpenPricing}
+            onOpenAccount={onOpenAccount}
+            onOpenGallery={onOpenGallery}
+          />
         ) : (
           <div className="max-w-2xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-5">
             {messages.map(msg => (

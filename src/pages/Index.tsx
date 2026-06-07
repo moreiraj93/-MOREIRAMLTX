@@ -6,6 +6,7 @@ import ChatWindow from '@/components/features/ChatWindow';
 import ImageGeneratorPanel from '@/components/features/ImageGeneratorPanel';
 import VideoGeneratorPanel from '@/components/features/VideoGeneratorPanel';
 import PromptLibrary from '@/components/features/PromptLibrary';
+import ProjectBrain from '@/components/features/ProjectBrain';
 import PersonalityPicker, { PersonalityPreset, loadPersonality, savePersonality } from '@/components/features/PersonalityPicker';
 import PricingModal from '@/components/features/PricingModal';
 import WelcomeProModal from '@/components/features/WelcomeProModal';
@@ -33,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 type TabMode = 'chat' | 'image-studio' | 'video-studio';
+type ImageStudioView = 'generate' | 'edit' | 'history';
 
 export default function Index() {
   const [conversations, setConversations] = useState<Conversation[]>(() => loadConversationsLocal());
@@ -41,7 +43,9 @@ export default function Index() {
   const [isTyping, setIsTyping] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>('chat');
   const [tabMode, setTabMode] = useState<TabMode>('chat');
+  const [imageStudioView, setImageStudioView] = useState<ImageStudioView>('generate');
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showBrain, setShowBrain] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [deepReasoning, setDeepReasoning] = useState(false);
   const [personality, setPersonality] = useState<PersonalityPreset>(() => loadPersonality());
@@ -263,8 +267,13 @@ export default function Index() {
     setPendingPrompt(prompt);
   };
 
+  const openImageStudio = (view: ImageStudioView = 'generate') => {
+    setImageStudioView(view);
+    setTabMode('image-studio');
+  };
+
   const TABS: { mode: TabMode; icon: typeof MessageSquare; label: string }[] = [
-    { mode: 'chat', icon: MessageSquare, label: 'Chat' },
+    { mode: 'chat', icon: MessageSquare, label: 'AI Copilot' },
     { mode: 'image-studio', icon: Image, label: 'Image Studio' },
     { mode: 'video-studio', icon: Video, label: 'Video Studio' },
   ];
@@ -310,7 +319,7 @@ export default function Index() {
           </button>
           <div className="flex-1 flex items-center justify-center gap-1.5">
             <span className="font-bold text-xs text-foreground flex items-baseline gap-1" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              MockJ
+              MockJ AI
               <span className="text-[10px] font-black" style={{ color: 'hsl(4 90% 58%)', textShadow: '0 0 8px hsl(4 90% 58% / 0.6)' }}>4</span>
             </span>
             {/* Online indicator */}
@@ -362,10 +371,16 @@ export default function Index() {
               onPendingPromptConsumed={() => setPendingPrompt(null)}
               deepReasoning={deepReasoning}
               onDeepReasoningChange={setDeepReasoning}
-              onOpenImageStudio={() => setTabMode('image-studio')}
+              onOpenImageStudio={() => openImageStudio('generate')}
+              onOpenVideoStudio={() => setTabMode('video-studio')}
+              onOpenProjectBrain={() => setShowBrain(true)}
+              onOpenPromptLibrary={() => setShowLibrary(true)}
+              onOpenPricing={() => setShowPricing(true)}
+              onOpenAccount={() => navigate(user ? '/account' : '/auth')}
+              onOpenGallery={() => openImageStudio('history')}
             />
           )}
-          {tabMode === 'image-studio' && <ImageGeneratorPanel />}
+          {tabMode === 'image-studio' && <ImageGeneratorPanel initialMode={imageStudioView} />}
           {tabMode === 'video-studio' && <VideoGeneratorPanel />}
         </div>
       </div>
@@ -392,6 +407,8 @@ export default function Index() {
       {showWelcomePro && (
         <WelcomeProModal onClose={() => setShowWelcomePro(false)} />
       )}
+
+      {showBrain && <ProjectBrain onClose={() => setShowBrain(false)} />}
 
       {/* ── Mobile bottom navigation bar ──────────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch border-t border-border bg-[hsl(224_20%_5%)]">

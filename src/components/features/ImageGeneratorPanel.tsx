@@ -13,6 +13,21 @@ import { toast } from 'sonner';
 
 type PanelMode = 'generate' | 'edit' | 'history';
 
+interface ImageGeneratorPanelProps {
+  initialMode?: PanelMode;
+}
+
+const MOREIRAJ_STYLE_CODE = 'MJELTXSJ777111';
+const MOREIRAJ_STYLE_RE = /\b(moreiraj|mjel|fashion|outfit|lookbook|wardrobe|streetwear|couture|runway|style build|image build)\b/i;
+
+function applyMoreiraJStyleCode(prompt: string) {
+  if (!MOREIRAJ_STYLE_RE.test(prompt) || prompt.includes(MOREIRAJ_STYLE_CODE)) {
+    return prompt;
+  }
+
+  return `${prompt}, ${MOREIRAJ_STYLE_CODE}`;
+}
+
 const STYLES: { value: ImageGenRequest['style']; label: string; emoji: string; desc: string }[] = [
   { value: 'realistic',  label: 'Realistic',   emoji: '📷', desc: 'Photo-real' },
   { value: 'artistic',   label: 'Artistic',    emoji: '🎨', desc: 'Fine art' },
@@ -105,8 +120,8 @@ function useVoiceInput(onTranscript: (t: string) => void) {
   return { listening, supported, start, stop };
 }
 
-export default function ImageGeneratorPanel() {
-  const [panelMode, setPanelMode] = useState<PanelMode>('generate');
+export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageGeneratorPanelProps) {
+  const [panelMode, setPanelMode] = useState<PanelMode>(initialMode);
 
   const [prompt, setPrompt]   = useState('');
   const [style, setStyle]     = useState<ImageGenRequest['style']>('realistic');
@@ -209,6 +224,10 @@ export default function ImageGeneratorPanel() {
   const voice = panelMode === 'generate' ? voiceGenerate : voiceEdit;
 
   useEffect(() => {
+    setPanelMode(initialMode);
+  }, [initialMode]);
+
+  useEffect(() => {
     if (panelMode !== 'history') return;
     setHistoryLoading(true);
     loadImageHistory().then(items => { setHistoryItems(items); setHistoryLoading(false); });
@@ -255,7 +274,7 @@ export default function ImageGeneratorPanel() {
     const msgs = panelMode === 'edit' ? EDIT_LOADING_MESSAGES : LOADING_MESSAGES;
     const iv = setInterval(() => setLoadingMsgIdx(i => (i + 1) % msgs.length), 2500);
 
-    let enhancedPrompt = activePrompt;
+    let enhancedPrompt = applyMoreiraJStyleCode(activePrompt);
     if (charConsistency) enhancedPrompt += ', maintain consistent character identity and facial features';
     if (facePreservation) enhancedPrompt += ', preserve and protect facial identity';
     if (addWatermark) enhancedPrompt += ', add subtle watermark';
@@ -319,9 +338,9 @@ export default function ImageGeneratorPanel() {
             </div>
             <div>
               <h2 className="font-black text-sm text-foreground leading-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                MOCKJ <span style={{ color: 'hsl(4 90% 58%)' }}>AI STUDIO</span>
+                MOCKJ <span style={{ color: 'hsl(4 90% 58%)' }}>IMAGE STUDIO</span>
               </h2>
-              <p className="text-[10px] text-muted-foreground">Create Anything. Control Everything.</p>
+              <p className="text-[10px] text-muted-foreground">MoreiraJ style lock · {MOREIRAJ_STYLE_CODE}</p>
             </div>
           </div>
 
