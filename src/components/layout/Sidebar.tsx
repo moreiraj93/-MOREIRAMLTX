@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/react';
 import { Plus, MessageSquare, Trash2, Image, Video, ChevronLeft, ChevronRight, Sparkles, BookOpen, Download, Smile, Crown, LogIn, LogOut, User, Brain, Volume2, VolumeX, Settings, X } from 'lucide-react';
 import { getAutoSpeak, toggleAutoSpeak } from '@/hooks/useAutoSpeak';
 import ProjectBrain from '@/components/features/ProjectBrain';
@@ -143,7 +144,32 @@ export default function Sidebar({
 
         {/* User Profile Strip */}
         {!collapsed && (
-          <div className="px-3 pt-3 pb-1">
+          <div className="px-3 pt-3 pb-1 space-y-2">
+            <div className="rounded-xl border border-[hsl(265_80%_65%_/_0.25)] bg-[hsl(265_80%_65%_/_0.05)] p-2">
+              <Show when="signed-out">
+                <div className="flex items-center gap-2">
+                  <SignInButton mode="modal">
+                    <button className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-semibold border border-[hsl(4_90%_58%_/_0.45)] text-[hsl(4_90%_58%)] bg-[hsl(4_90%_58%_/_0.08)] hover:bg-[hsl(4_90%_58%_/_0.16)] transition-all">
+                      <LogIn className="w-3 h-3" /> Clerk Sign in
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-semibold text-white bg-[hsl(265_80%_65%)] hover:opacity-90 transition-all">
+                      Sign up
+                    </button>
+                  </SignUpButton>
+                </div>
+              </Show>
+              <Show when="signed-in">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[11px] font-semibold text-foreground">Clerk account</p>
+                    <p className="text-[10px] text-muted-foreground">Profile and session active</p>
+                  </div>
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              </Show>
+            </div>
             {user ? (
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[hsl(224_15%_10%)] border border-border">
                 <div className="w-7 h-7 rounded-full overflow-hidden bg-[hsl(4_90%_58%_/_0.15)] border border-[hsl(4_90%_58%_/_0.4)] flex items-center justify-center shrink-0">
