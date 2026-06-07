@@ -82,9 +82,14 @@ export function useTTS(messageId: string) {
         throw new Error(await readTtsError(response));
       }
 
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.startsWith('audio/')) {
+        throw new Error('TTS endpoint returned a non-audio response. Make sure the Node backend is deployed.');
+      }
+
       const data = await response.arrayBuffer();
       const blob = new Blob([data], {
-        type: response.headers.get('content-type') || 'audio/mpeg',
+        type: contentType || 'audio/mpeg',
       });
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
