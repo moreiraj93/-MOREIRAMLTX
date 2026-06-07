@@ -4,6 +4,7 @@ import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
 import ChatInput from './ChatInput';
+import { TokenAction } from '@/hooks/useTokenWallet';
 
 interface ChatWindowProps {
   messages: Message[];
@@ -22,6 +23,8 @@ interface ChatWindowProps {
   onOpenPricing?: () => void;
   onOpenAccount?: () => void;
   onOpenGallery?: () => void;
+  tokenBalance?: number;
+  tokenCosts?: Record<TokenAction, number>;
 }
 
 export default function ChatWindow({
@@ -41,6 +44,8 @@ export default function ChatWindow({
   onOpenPricing,
   onOpenAccount,
   onOpenGallery,
+  tokenBalance,
+  tokenCosts,
 }: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +67,8 @@ export default function ChatWindow({
             onOpenPricing={onOpenPricing}
             onOpenAccount={onOpenAccount}
             onOpenGallery={onOpenGallery}
+            tokenBalance={tokenBalance}
+            tokenCosts={tokenCosts}
           />
         ) : (
           <div className="max-w-2xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-5">

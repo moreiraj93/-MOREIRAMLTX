@@ -18,7 +18,10 @@ interface ImageGeneratorPanelProps {
 }
 
 const MOREIRAJ_STYLE_CODE = 'MJELTXSJ777111';
-const MOREIRAJ_STYLE_RE = /\b(moreiraj|mjel|fashion|outfit|lookbook|wardrobe|streetwear|couture|runway|style build|image build)\b/i;
+const MOREIRAJ_STYLE_RE = /\b(moreiraj|mjel|fashion|outfit|lookbook|wardrobe|streetwear|couture|runway|style build|image build|editorial|boudoir|lingerie|glamour|glamor|portrait prompt)\b/i;
+const ADULT_EDITORIAL_RE = /\b(adult editorial|boudoir|lingerie|sensual|intimate portrait|glamour|glamor|swimwear|pinup|tasteful adult)\b/i;
+const ADULT_EDITORIAL_GUARDRAIL =
+  'tasteful adult editorial, 21+ adult model, non-explicit, fashion-forward, consent-aware, no nudity, no sexual act, premium magazine lighting';
 
 function applyMoreiraJStyleCode(prompt: string) {
   if (!MOREIRAJ_STYLE_RE.test(prompt) || prompt.includes(MOREIRAJ_STYLE_CODE)) {
@@ -26,6 +29,14 @@ function applyMoreiraJStyleCode(prompt: string) {
   }
 
   return `${prompt}, ${MOREIRAJ_STYLE_CODE}`;
+}
+
+function applyAdultEditorialGuardrails(prompt: string) {
+  if (!ADULT_EDITORIAL_RE.test(prompt) || /non-explicit|no nudity|21\+ adult/i.test(prompt)) {
+    return prompt;
+  }
+
+  return `${prompt}, ${ADULT_EDITORIAL_GUARDRAIL}`;
 }
 
 const STYLES: { value: ImageGenRequest['style']; label: string; emoji: string; desc: string }[] = [
@@ -274,7 +285,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
     const msgs = panelMode === 'edit' ? EDIT_LOADING_MESSAGES : LOADING_MESSAGES;
     const iv = setInterval(() => setLoadingMsgIdx(i => (i + 1) % msgs.length), 2500);
 
-    let enhancedPrompt = applyMoreiraJStyleCode(activePrompt);
+    let enhancedPrompt = applyAdultEditorialGuardrails(applyMoreiraJStyleCode(activePrompt));
     if (charConsistency) enhancedPrompt += ', maintain consistent character identity and facial features';
     if (facePreservation) enhancedPrompt += ', preserve and protect facial identity';
     if (addWatermark) enhancedPrompt += ', add subtle watermark';

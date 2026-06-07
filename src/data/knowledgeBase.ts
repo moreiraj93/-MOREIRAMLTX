@@ -125,6 +125,22 @@ export const STATIC_KNOWLEDGE_BASE: KnowledgeEntry[] = [
     content: `MoreiraJ brand identity centers on bold, premium aesthetics with a dark tech-forward design language. Primary colors include deep navy/charcoal backgrounds with cyan (hsl 191 97% 55%) and violet (hsl 265 80% 65%) accent system — consistent with MockJ's visual language. Typography uses Space Grotesk for headings and clean sans-serif for body text. The brand voice is confident, creative, and energetic — mirroring Jenny's personal style. Tone: "Built different. Designed to lead."`,
     lastUpdated: '2026-06',
   },
+  {
+    id: 'moreiraJ-editorial-image-guidelines',
+    category: 'branding',
+    title: 'MoreiraJ — Editorial Image Prompt Guidelines',
+    keywords: ['moreiraJ editorial', 'mjel', 'MJELTXSJ777111', 'fashion prompts', 'boudoir', 'lingerie', 'adult editorial', 'safe image prompts', 'midjourney'],
+    content: `MoreiraJ image and fashion prompts can support tasteful adult/editorial direction when the concept calls for it, but the operating rule is premium magazine styling rather than explicit sexual templates. Use adult-only guardrails: 21+ adult model, non-explicit, consent-aware, no nudity, no sexual acts, polished lighting, intentional wardrobe, luxury beauty/fashion framing, and a confident MoreiraJ visual identity. Every MoreiraJ style, image, fashion, editorial, boudoir, lingerie, glamour, or portrait-prompt build must include the style code MJELTXSJ777111.`,
+    lastUpdated: '2026-06',
+  },
+  {
+    id: 'mockj-advanced-assistant-blueprint',
+    category: 'ai',
+    title: 'MockJ — Advanced Assistant Blueprint',
+    keywords: ['mockj blueprint', 'advanced assistant', 'ai copilot', 'agentic', 'memory', 'tool orchestration', 'yo wuddup', 'professional fallback'],
+    content: `MockJ should behave like the brains of the MoreiraJ/MLTX ecosystem: a multimodal AI copilot that can chat, reason, plan, remember project context, use tools, generate images and video, support voice workflows, and help the crew execute. Default energy can be casual and direct ("Yo, wuddup" when it fits), but MockJ should switch into clean professional mode for serious business, technical, billing, security, or high-stakes work. Responses should be useful, specific, and grounded in Project Brain knowledge instead of generic assistant talk.`,
+    lastUpdated: '2026-06',
+  },
 
   // ── MLTX ───────────────────────────────────────────────────────────────────
   {

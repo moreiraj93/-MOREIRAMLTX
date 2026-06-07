@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import logoImg from '@/assets/mockj-logo.png';
 import heroBg from '@/assets/mocka-hero-bg.jpg';
+import { TokenAction } from '@/hooks/useTokenWallet';
 
 interface WelcomeScreenProps {
   onSuggestion: (text: string) => void;
@@ -30,6 +31,8 @@ interface WelcomeScreenProps {
   onOpenPricing?: () => void;
   onOpenAccount?: () => void;
   onOpenGallery?: () => void;
+  tokenBalance?: number;
+  tokenCosts?: Record<TokenAction, number>;
 }
 
 type ModuleAction =
@@ -162,6 +165,8 @@ export default function WelcomeScreen({
   onOpenPricing,
   onOpenAccount,
   onOpenGallery,
+  tokenBalance = 7711,
+  tokenCosts,
 }: WelcomeScreenProps) {
   const handleModule = (action: ModuleAction, prompt?: string) => {
     if (action === 'image') {
@@ -294,13 +299,16 @@ export default function WelcomeScreen({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.25em] text-[hsl(4_90%_70%)]">MLTX Wallet</p>
-                  <p className="mt-2 text-3xl font-black text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>7,711</p>
+                  <p className="mt-2 text-3xl font-black text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{tokenBalance.toLocaleString()}</p>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[hsl(4_90%_58%_/_0.38)] bg-black/30">
                   <Wallet className="h-5 w-5 text-[hsl(4_90%_64%)]" />
                 </div>
               </div>
               <p className="mt-3 text-xs leading-5 text-white/55">Token wallet surface for credits, rewards, Pro access, and saved creation spend.</p>
+              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/38">
+                Chat {tokenCosts?.chat ?? 1} · Image {tokenCosts?.image ?? 25} · Video {tokenCosts?.video ?? 100}
+              </p>
               <button
                 onClick={() => handleModule('wallet')}
                 className="mt-4 w-full rounded-lg border border-white/10 bg-white/[0.055] px-3 py-2 text-xs font-bold text-white/75 transition hover:border-[hsl(4_90%_58%_/_0.45)] hover:text-white"

@@ -41,6 +41,34 @@ export function useAuthActions() {
     setLoading(false);
   };
 
+  const resetPassword = async (email: string) => {
+    setLoading(true);
+    try {
+      const redirectTo = `${window.location.origin}/auth?reset=password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) throw error;
+      toast.success('Password reset link sent. Check your email.');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send reset link');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      if (data.user) login(mapUser(data.user));
+      toast.success('Password updated. You are signed in.');
+      navigate('/');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update password');
+      setLoading(false);
+    }
+  };
+
   const verifyOtpAndSetPassword = async (
     email: string,
     token: string,
@@ -88,5 +116,14 @@ export function useAuthActions() {
     }
   };
 
-  return { sendOtp, verifyOtpAndSetPassword, signInWithPassword, loading, otpSent, setOtpSent };
+  return {
+    sendOtp,
+    verifyOtpAndSetPassword,
+    signInWithPassword,
+    resetPassword,
+    updatePassword,
+    loading,
+    otpSent,
+    setOtpSent,
+  };
 }

@@ -6,14 +6,20 @@ import { useAuthActions } from '@/hooks/useAuthActions';
 import { Link } from 'react-router-dom';
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset' | 'update-password'>(() => {
+    if (typeof window === 'undefined') return 'login';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('reset') === 'password' || window.location.hash.includes('type=recovery')
+      ? 'update-password'
+      : 'login';
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [otp, setOtp] = useState('');
   const [showPass, setShowPass] = useState(false);
 
-  const { sendOtp, verifyOtpAndSetPassword, signInWithPassword, loading, otpSent, setOtpSent } =
+  const { sendOtp, verifyOtpAndSetPassword, signInWithPassword, resetPassword, updatePassword, loading, otpSent, setOtpSent } =
     useAuthActions();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -29,6 +35,16 @@ export default function AuthPage() {
   const handleSignupStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
     await verifyOtpAndSetPassword(email, otp, password, username);
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await resetPassword(email);
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updatePassword(password);
   };
 
   return (
@@ -48,16 +64,29 @@ export default function AuthPage() {
             </div>
           </Link>
           <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            {mode === 'login' ? 'Welcome back 👋' : 'Join MockJ 🔥'}
+            {mode === 'login'
+              ? 'Welcome back 👋'
+              : mode === 'signup'
+              ? 'Join MockJ 🔥'
+              : mode === 'reset'
+              ? 'Reset password'
+              : 'Set new password'}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {mode === 'login' ? 'Sign in to your MockJ account' : 'Create your account to get started'}
+            {mode === 'login'
+              ? 'Sign in to your MockJ account'
+              : mode === 'signup'
+              ? 'Create your account to get started'
+              : mode === 'reset'
+              ? 'Send a recovery link to your email'
+              : 'Choose a new password for your account'}
           </p>
         </div>
 
         {/* Card */}
         <div className="bg-[hsl(224_20%_7%)] border border-border rounded-2xl p-6 shadow-xl">
           {/* Mode Toggle */}
+          {mode !== 'update-password' && (
           <div className="flex rounded-xl border border-border p-1 mb-6 bg-[hsl(224_20%_5%)]">
             {(['login', 'signup'] as const).map(m => (
               <button
@@ -74,6 +103,7 @@ export default function AuthPage() {
               </button>
             ))}
           </div>
+          )}
 
           {/* Login Form */}
           {mode === 'login' && (
@@ -101,7 +131,56 @@ export default function AuthPage() {
                   </button>
                 }
               />
+              <button
+                type="button"
+                onClick={() => setMode('reset')}
+                className="text-xs font-medium text-muted-foreground hover:text-[hsl(191_97%_65%)] transition-colors"
+              >
+                Forgot password?
+              </button>
               <SubmitButton loading={loading} label="Sign In" />
+            </form>
+          )}
+
+          {mode === 'reset' && (
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <InputField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                icon={<Mail className="w-4 h-4" />}
+                placeholder="you@example.com"
+                required
+              />
+              <SubmitButton loading={loading} label="Send Reset Link" />
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Back to sign in
+              </button>
+            </form>
+          )}
+
+          {mode === 'update-password' && (
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
+              <InputField
+                label="New Password"
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={setPassword}
+                icon={<Lock className="w-4 h-4" />}
+                placeholder="Min. 6 characters"
+                required
+                suffix={
+                  <button type="button" onClick={() => setShowPass(v => !v)} className="text-muted-foreground hover:text-foreground transition-colors">
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                }
+              />
+              <SubmitButton loading={loading} label="Update Password" />
             </form>
           )}
 
