@@ -1,12 +1,10 @@
 /**
  * useTTS — ElevenLabs text-to-speech hook for MockJ
- * Calls the `elevenlabs-tts` edge function and plays the returned audio.
+ * Calls the app backend and plays the returned ElevenLabs audio.
  * Manages global playback state so only one message plays at a time.
  */
 
 import { useState, useRef, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { FunctionsHttpError } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 type TTSState = 'idle' | 'loading' | 'playing';
@@ -28,6 +26,18 @@ function stopGlobal() {
     globalSetState = null;
   }
   globalPlayingId = null;
+}
+
+async function readTtsError(response: Response) {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    const payload = await response.json().catch(() => null);
+    if (payload?.error) return payload.error;
+  }
+
+  const text = await response.text().catch(() => '');
+  return text || `TTS request failed (${response.status})`;
 }
 
 export function useTTS(messageId: string) {
@@ -60,23 +70,22 @@ export function useTTS(messageId: string) {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
-        body: { text },
+      const response = await fetch('/api/elevenlabs-tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
       });
 
-      if (error) {
-        let msg = error.message;
-        if (error instanceof FunctionsHttpError) {
-          try {
-            const raw = await error.context?.text();
-            msg = raw || msg;
-          } catch { /* ignore */ }
-        }
-        throw new Error(msg);
+      if (!response.ok) {
+        throw new Error(await readTtsError(response));
       }
 
-      // `data` is an ArrayBuffer (audio/mpeg binary)
-      const blob = new Blob([data], { type: 'audio/mpeg' });
+      const data = await response.arrayBuffer();
+      const blob = new Blob([data], {
+        type: response.headers.get('content-type') || 'audio/mpeg',
+      });
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
 

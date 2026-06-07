@@ -146,6 +146,65 @@ function requestOrigin(req) {
   ).replace(/\/$/, '');
 }
 
+function stripMarkdown(text) {
+  return text
+    .replace(/```[\s\S]*?```/g, 'code block')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/#{1,6}\s/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[_~]/g, '')
+    .trim();
+}
+
+app.post('/api/elevenlabs-tts', async (req, res) => {
+  try {
+    const apiKey = requiredEnv('ELEVENLABS_API_KEY');
+    const voiceId = process.env.ELEVENLABS_VOICE_ID || 'rnINyKVJJCsVUHIOdXVj';
+    const rawText = typeof req.body?.text === 'string' ? req.body.text : '';
+    const text = stripMarkdown(rawText).slice(0, 5000);
+
+    if (!text) {
+      res.status(400).json({ error: 'Text is required for voice playback' });
+      return;
+    }
+
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: 'POST',
+      headers: {
+        Accept: 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        text,
+        model_id: process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2_5',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => '');
+      res.status(response.status).json({
+        error: details || `ElevenLabs request failed with status ${response.status}`,
+      });
+      return;
+    }
+
+    const audio = Buffer.from(await response.arrayBuffer());
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'audio/mpeg');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(audio);
+  } catch (error) {
+    const status = error.statusCode || 500;
+    res.status(status).json({ error: error.message || 'Failed to generate speech' });
+  }
+});
+
 app.post('/api/check-subscription', async (req, res) => {
   try {
     const user = await requireUser(req);
