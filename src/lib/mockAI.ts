@@ -139,6 +139,10 @@ export async function generateImage(request: ImageGenRequest): Promise<string> {
       quality: request.quality ?? '1K',
       modelVersion: request.modelVersion,
       sourceImageDataUrl: request.sourceImageDataUrl,
+      charConsistency: request.charConsistency,
+      facePreservation: request.facePreservation,
+      addWatermark: request.addWatermark,
+      privateMode: request.privateMode,
     },
   });
 

@@ -22,6 +22,10 @@ interface ImageRequestBody {
   quality?: string;
   modelVersion?: string;
   sourceImageDataUrl?: string;
+  charConsistency?: boolean;
+  facePreservation?: boolean;
+  addWatermark?: boolean;
+  privateMode?: boolean;
 }
 
 interface VideoCreateBody {
@@ -44,6 +48,7 @@ type RequestBody = ChatRequestBody | ImageRequestBody | VideoCreateBody | VideoC
 // ──────────────────────────────────────────────────────────────────────────────
 const FREE_LIMITS = { chat: 10, image: 10, video: 1 };
 type ActionType = 'chat' | 'image' | 'video';
+type UsageMode = 'check' | 'consume';
 
 /**
  * Check and increment usage for an authenticated free user.
@@ -55,7 +60,8 @@ async function checkAndIncrementUsage(
   supabaseAdmin: ReturnType<typeof createClient>,
   userId: string,
   action: ActionType,
-  isSubscribed: boolean
+  isSubscribed: boolean,
+  mode: UsageMode = 'consume'
 ): Promise<{ allowed: boolean; remaining: number }> {
   if (isSubscribed) return { allowed: true, remaining: Infinity };
 
@@ -83,6 +89,10 @@ async function checkAndIncrementUsage(
     const lifetimeCount = (rows ?? []).reduce((sum, row) => sum + ((row.image_count as number) ?? 0), 0);
     if (lifetimeCount >= limit) {
       return { allowed: false, remaining: 0 };
+    }
+
+    if (mode === 'check') {
+      return { allowed: true, remaining: Math.max(0, limit - lifetimeCount) };
     }
 
     const { data, error } = await supabaseAdmin
@@ -123,6 +133,10 @@ async function checkAndIncrementUsage(
   const current = (data as Record<string, number>)[col] ?? 0;
   if (current >= limit) {
     return { allowed: false, remaining: 0 };
+  }
+
+  if (mode === 'check') {
+    return { allowed: true, remaining: limit - current };
   }
 
   // Increment atomically
@@ -288,7 +302,11 @@ Deno.serve(async (req: Request) => {
         : 'chat';
 
       const { allowed, remaining } = await checkAndIncrementUsage(
-        supabaseAdmin, userId, action, isSubscribed
+        supabaseAdmin,
+        userId,
+        action,
+        isSubscribed,
+        action === 'image' ? 'check' : 'consume'
       );
 
       if (!allowed) {
@@ -321,6 +339,10 @@ Deno.serve(async (req: Request) => {
         quality = '1K',
         modelVersion = 'gemini-2.5-flash-image',
         sourceImageDataUrl,
+        charConsistency = false,
+        facePreservation = false,
+        addWatermark = false,
+        privateMode = false,
       } = body;
 
       if (!prompt?.trim()) {
@@ -336,6 +358,9 @@ Deno.serve(async (req: Request) => {
         anime: 'anime style, vibrant colors, clean linework, detailed anime illustration',
         sketch: 'pencil sketch, detailed line art, graphite drawing, monochromatic',
         cyberpunk: 'cyberpunk aesthetic, neon lights, dark futuristic atmosphere, sci-fi, glowing accents',
+        watercolor: 'watercolor painting, soft washes, translucent pigment, gentle paper texture, delicate edges',
+        oil: 'classic oil painting, rich brushwork, layered paint texture, museum-quality lighting',
+        '3d': 'premium 3D render, cinematic CGI, physically based materials, polished studio lighting',
       };
 
       const styleHint = styleGuides[style] ?? styleGuides.realistic;
@@ -353,9 +378,15 @@ Deno.serve(async (req: Request) => {
       };
       const modelHint = modelGuides[modelVersion] ?? modelGuides['gemini-2.5-flash-image'];
       const isEditing = !!sourceImageDataUrl;
+      const featureHints = [
+        charConsistency ? 'Maintain consistent character identity, facial structure, wardrobe logic, and recurring details across generations.' : '',
+        facePreservation ? 'Preserve facial identity and avoid unwanted face distortion, identity swapping, or warped features.' : '',
+        addWatermark ? 'Embed a subtle MockJ watermark that does not cover the subject or important composition areas.' : '',
+        privateMode ? 'Treat this as a private workspace generation; avoid adding public-gallery framing or social-post labels.' : '',
+      ].filter(Boolean).join(' ');
       const enhancedPrompt = isEditing
-        ? `Edit this image: ${prompt}. Apply the change naturally and realistically. Preserve the overall composition except for the described changes. ${modelHint}.`
-        : `${prompt}. Style: ${styleHint}. ${modelHint}.`;
+        ? `Edit this image: ${prompt}. Apply the change naturally and realistically. Preserve the overall composition except for the described changes. ${modelHint}. ${featureHints}`.trim()
+        : `${prompt}. Style: ${styleHint}. ${modelHint}. ${featureHints}`.trim();
 
       console.log(`mocka-image (${isEditing ? 'edit' : 'generate'}): "${enhancedPrompt.slice(0, 80)}...", ratio=${aspectRatio}, quality=${quality}, modelVersion=${modelVersion}`);
 
@@ -402,6 +433,22 @@ Deno.serve(async (req: Request) => {
         return new Response(
           JSON.stringify({ error: 'No image was generated' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (userId) {
+        const usage = await checkAndIncrementUsage(supabaseAdmin, userId, 'image', isSubscribed, 'consume');
+        if (!usage.allowed) {
+          console.warn(`mocka-image: generated image but usage consume was blocked for user ${userId}`);
+        } else {
+          console.log(`mocka-image: consumed image credit for user ${userId}, remaining=${usage.remaining}`);
+        }
+      }
+
+      if (privateMode) {
+        return new Response(
+          JSON.stringify({ imageUrl: imageDataUrl, altText, private: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 

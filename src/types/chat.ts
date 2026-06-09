@@ -28,6 +28,10 @@ export interface ImageGenRequest {
   quality?: string;
   modelVersion?: string;
   sourceImageDataUrl?: string; // for image editing
+  charConsistency?: boolean;
+  facePreservation?: boolean;
+  addWatermark?: boolean;
+  privateMode?: boolean;
 }
 
 export interface VideoGenRequest {

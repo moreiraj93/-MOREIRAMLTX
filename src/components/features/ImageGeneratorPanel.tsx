@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, TouchEvent } from 'react';
+import { useUser as useClerkUser } from '@clerk/react';
 import {
   Image, Download, RefreshCw, Sparkles, Zap, Star, Upload, X, Wand2,
   Mic, MicOff, Shield, Droplets, User, Layers, Move, Crown,
@@ -154,6 +155,7 @@ function useVoiceInput(onTranscript: (t: string) => void) {
 export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageGeneratorPanelProps) {
   const navigate = useNavigate();
   const { user, subscription } = useAuth();
+  const { isSignedIn: clerkSignedIn } = useClerkUser();
   const { consumeOrBlock, getRemaining, getLimitLabel } = useUsageLimits();
   const { tokenBalance, tokenCosts, canSpendTokens, spendTokens } = useTokenWallet();
   const [panelMode, setPanelMode] = useState<PanelMode>(initialMode);
@@ -306,8 +308,18 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
     const useQuality = overrideQuality ?? quality;
 
     if (!user) {
-      toast.error('Sign in required to use MockJ Image Studio.');
+      toast.error(
+        clerkSignedIn
+          ? 'Finish MockJ account sign-in to use Image Studio. Storage, tokens, and billing still need the app account session.'
+          : 'Sign in required to use MockJ Image Studio.'
+      );
       navigate('/auth');
+      return;
+    }
+
+    if (!subscription.subscribed && useQuality === '4K') {
+      toast.error('Ultra 4K image output is a Pro option. Subscribe monthly to unlock it.');
+      setShowPricing(true);
       return;
     }
 
@@ -329,10 +341,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
     const msgs = panelMode === 'edit' ? EDIT_LOADING_MESSAGES : LOADING_MESSAGES;
     const iv = setInterval(() => setLoadingMsgIdx(i => (i + 1) % msgs.length), 2500);
 
-    let enhancedPrompt = applyAdultEditorialGuardrails(applyMoreiraJStyleCode(activePrompt));
-    if (charConsistency) enhancedPrompt += ', maintain consistent character identity and facial features';
-    if (facePreservation) enhancedPrompt += ', preserve and protect facial identity';
-    if (addWatermark) enhancedPrompt += ', add subtle watermark';
+    const enhancedPrompt = applyAdultEditorialGuardrails(applyMoreiraJStyleCode(activePrompt));
 
     try {
       const url = await generateImage({
@@ -342,16 +351,24 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
         quality: useQuality,
         modelVersion,
         sourceImageDataUrl: panelMode === 'edit' ? (sourceImage ?? undefined) : undefined,
+        charConsistency,
+        facePreservation,
+        addWatermark,
+        privateMode,
       });
       setResult(url);
-      saveImageGeneration({
-        prompt: activePrompt,
-        style: useStyle,
-        aspectRatio: useRatio,
-        quality: useQuality,
-        mode: (panelMode === 'history' ? 'generate' : panelMode) as 'generate' | 'edit',
-        imageUrl: url,
-      });
+      if (privateMode) {
+        toast.success('Private image generated. It was not saved to history.');
+      } else {
+        saveImageGeneration({
+          prompt: activePrompt,
+          style: useStyle,
+          aspectRatio: useRatio,
+          quality: useQuality,
+          mode: (panelMode === 'history' ? 'generate' : panelMode) as 'generate' | 'edit',
+          imageUrl: url,
+        });
+      }
       if (!subscription.subscribed) {
         consumeOrBlock('image');
         spendTokens('image');
@@ -705,7 +722,14 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
                 {QUALITY_OPTIONS.map(q => {
                   const Icon = q.icon;
                   return (
-                    <button key={q.value} onClick={() => setQuality(q.value)}
+                    <button key={q.value} onClick={() => {
+                      if (q.pro && !subscription.subscribed) {
+                        toast.error('Ultra 4K image output is included with Pro.');
+                        setShowPricing(true);
+                        return;
+                      }
+                      setQuality(q.value);
+                    }}
                       className={cn(
                         'flex flex-col items-start gap-0.5 px-2.5 py-2.5 rounded-xl border transition-all duration-200',
                         quality === q.value
