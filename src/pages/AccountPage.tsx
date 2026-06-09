@@ -12,6 +12,7 @@ import { postAuthedApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import logoImg from '@/assets/mockj-logo.png';
+import TreasuryAllocator from '@/components/features/TreasuryAllocator';
 
 const FREE_LIMITS = { chat: 10, image: 10, video: 1 };
 
@@ -434,6 +435,8 @@ export default function AccountPage() {
             </div>
           )}
         </div>
+
+        <TreasuryAllocator />
 
         {/* Usage meters */}
         <div>
