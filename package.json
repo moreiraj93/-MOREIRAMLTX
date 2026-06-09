@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "node --test \"server/**/*.test.js\"",
     "start": "node server/index.js"
   },
   "dependencies": {
