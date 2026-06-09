@@ -5,13 +5,16 @@ import App from './App.tsx';
 import './index.css';
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const app = <App />;
 
 if (!clerkPublishableKey) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
+  console.warn('Missing VITE_CLERK_PUBLISHABLE_KEY; rendering without ClerkProvider.');
 }
 
 createRoot(document.getElementById('root')!).render(
-  <ClerkProvider publishableKey={clerkPublishableKey} afterSignOutUrl="/" appearance={{ theme: shadcn }}>
-    <App />
-  </ClerkProvider>,
+  clerkPublishableKey ? (
+    <ClerkProvider publishableKey={clerkPublishableKey} afterSignOutUrl="/" appearance={{ theme: shadcn }}>
+      {app}
+    </ClerkProvider>
+  ) : app,
 );
