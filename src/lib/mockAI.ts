@@ -4,6 +4,86 @@ import { FunctionsHttpError } from '@supabase/supabase-js';
 import { PersonalityPreset } from '@/components/features/PersonalityPicker';
 import { searchKnowledge, formatKnowledgeContext } from '@/lib/knowledgeSearch';
 
+const PRIMARY_AI_FUNCTION_NAME =
+  (import.meta.env.VITE_MOCKJ_AI_FUNCTION_NAME as string | undefined) || 'mocka-chat-v2';
+const FALLBACK_AI_FUNCTION_NAME =
+  PRIMARY_AI_FUNCTION_NAME === 'mocka-chat-v2' ? 'mocka-chat' : undefined;
+
+type AiFunctionBody = Record<string, unknown>;
+
+function shouldFallbackToV1(status?: number) {
+  return status === 404 || status === 410;
+}
+
+async function readFunctionError(error: unknown): Promise<Error> {
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const statusCode = error.context?.status ?? 500;
+      const textContent = await error.context?.text();
+      let message = textContent || error.message || 'Unknown error';
+      let limitExceeded = false;
+
+      try {
+        const parsed = JSON.parse(textContent || '{}') as { error?: string; limitExceeded?: boolean };
+        message = parsed.error || message;
+        limitExceeded = parsed.limitExceeded === true;
+      } catch {
+        // Keep raw text for non-JSON function errors.
+      }
+
+      const fnError = new Error(`[Code: ${statusCode}] ${message}`) as Error & {
+        limitExceeded?: boolean;
+        status?: number;
+      };
+      fnError.limitExceeded = limitExceeded;
+      fnError.status = statusCode;
+      return fnError;
+    } catch {
+      return new Error(error.message || 'Failed to read response');
+    }
+  }
+
+  return new Error(error instanceof Error ? error.message : 'Function request failed');
+}
+
+async function invokeAiFunction<T>(body: AiFunctionBody): Promise<T> {
+  const primary = await supabase.functions.invoke(PRIMARY_AI_FUNCTION_NAME, { body });
+  if (!primary.error) return primary.data as T;
+
+  const status = primary.error instanceof FunctionsHttpError ? primary.error.context?.status : undefined;
+  if (FALLBACK_AI_FUNCTION_NAME && shouldFallbackToV1(status)) {
+    console.warn(`MockJ AI function ${PRIMARY_AI_FUNCTION_NAME} missing; falling back to ${FALLBACK_AI_FUNCTION_NAME}.`);
+    const fallback = await supabase.functions.invoke(FALLBACK_AI_FUNCTION_NAME, { body });
+    if (!fallback.error) return fallback.data as T;
+    throw await readFunctionError(fallback.error);
+  }
+
+  throw await readFunctionError(primary.error);
+}
+
+async function fetchAiFunction(body: AiFunctionBody): Promise<Response> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+  const request = (functionName: string) => fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${supabaseKey}`,
+      apikey: supabaseKey,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const primary = await request(PRIMARY_AI_FUNCTION_NAME);
+  if (FALLBACK_AI_FUNCTION_NAME && shouldFallbackToV1(primary.status)) {
+    console.warn(`MockJ AI function ${PRIMARY_AI_FUNCTION_NAME} missing; falling back to ${FALLBACK_AI_FUNCTION_NAME}.`);
+    return request(FALLBACK_AI_FUNCTION_NAME);
+  }
+
+  return primary;
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Chat history type
 // ──────────────────────────────────────────────────────────────────────────────
@@ -36,21 +116,7 @@ export async function* streamChatResponse(
     { role: 'user', content: userContent },
   ];
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-
-  const response = await fetch(
-    `${supabaseUrl}/functions/v1/mocka-chat`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`,
-        'apikey': supabaseKey,
-      },
-      body: JSON.stringify({ type: 'chat', messages, stream: true, personalityPreset: personality, knowledgeContext }),
-    }
-  );
+  const response = await fetchAiFunction({ type: 'chat', messages, stream: true, personalityPreset: personality, knowledgeContext });
 
   if (!response.ok || !response.body) {
     const text = await response.text();
@@ -104,23 +170,7 @@ export async function generateChatResponse(
     { role: 'user', content: message },
   ];
 
-  const { data, error } = await supabase.functions.invoke('mocka-chat', {
-    body: { type: 'chat', messages, stream: false },
-  });
-
-  if (error) {
-    let errorMessage = error.message;
-    if (error instanceof FunctionsHttpError) {
-      try {
-        const statusCode = error.context?.status ?? 500;
-        const textContent = await error.context?.text();
-        errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`;
-      } catch {
-        errorMessage = error.message || 'Failed to read response';
-      }
-    }
-    throw new Error(errorMessage);
-  }
+  const data = await invokeAiFunction<{ content?: string }>({ type: 'chat', messages, stream: false });
 
   return data?.content ?? "An unexpected interruption occurred. Please resubmit your query.";
 }
@@ -130,35 +180,19 @@ export async function generateChatResponse(
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function generateImage(request: ImageGenRequest): Promise<string> {
-  const { data, error } = await supabase.functions.invoke('mocka-chat', {
-    body: {
-      type: 'image',
-      prompt: request.prompt,
-      style: request.style,
-      aspectRatio: request.aspectRatio,
-      quality: request.quality ?? '1K',
-      modelVersion: request.modelVersion,
-      sourceImageDataUrl: request.sourceImageDataUrl,
-      charConsistency: request.charConsistency,
-      facePreservation: request.facePreservation,
-      addWatermark: request.addWatermark,
-      privateMode: request.privateMode,
-    },
+  const data = await invokeAiFunction<{ imageUrl?: string }>({
+    type: 'image',
+    prompt: request.prompt,
+    style: request.style,
+    aspectRatio: request.aspectRatio,
+    quality: request.quality ?? '1K',
+    modelVersion: request.modelVersion,
+    sourceImageDataUrl: request.sourceImageDataUrl,
+    charConsistency: request.charConsistency,
+    facePreservation: request.facePreservation,
+    addWatermark: request.addWatermark,
+    privateMode: request.privateMode,
   });
-
-  if (error) {
-    let errorMessage = error.message;
-    if (error instanceof FunctionsHttpError) {
-      try {
-        const statusCode = error.context?.status ?? 500;
-        const textContent = await error.context?.text();
-        errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`;
-      } catch {
-        errorMessage = error.message || 'Failed to read response';
-      }
-    }
-    throw new Error(errorMessage);
-  }
 
   const imageUrl = data?.imageUrl;
   if (!imageUrl) throw new Error('No image URL returned');
@@ -183,28 +217,12 @@ function mapAspectRatio(ratio: string): string {
 }
 
 export async function createVideoTask(request: VideoGenRequest & { aspectRatio?: string }): Promise<VideoTask> {
-  const { data, error } = await supabase.functions.invoke('mocka-chat', {
-    body: {
-      type: 'video-create',
-      prompt: request.prompt,
-      duration: durationToSeconds(request.duration),
-      aspectRatio: mapAspectRatio(request.aspectRatio ?? '16:9'),
-    },
+  const data = await invokeAiFunction<{ id: string; status?: VideoTask['status'] }>({
+    type: 'video-create',
+    prompt: request.prompt,
+    duration: durationToSeconds(request.duration),
+    aspectRatio: mapAspectRatio(request.aspectRatio ?? '16:9'),
   });
-
-  if (error) {
-    let errorMessage = error.message;
-    if (error instanceof FunctionsHttpError) {
-      try {
-        const statusCode = error.context?.status ?? 500;
-        const textContent = await error.context?.text();
-        errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`;
-      } catch {
-        errorMessage = error.message || 'Failed to read response';
-      }
-    }
-    throw new Error(errorMessage);
-  }
 
   return {
     id: data.id,
@@ -214,23 +232,12 @@ export async function createVideoTask(request: VideoGenRequest & { aspectRatio?:
 }
 
 export async function checkVideoTask(predictionId: string): Promise<VideoTask> {
-  const { data, error } = await supabase.functions.invoke('mocka-chat', {
-    body: { type: 'video-check', predictionId },
-  });
-
-  if (error) {
-    let errorMessage = error.message;
-    if (error instanceof FunctionsHttpError) {
-      try {
-        const statusCode = error.context?.status ?? 500;
-        const textContent = await error.context?.text();
-        errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`;
-      } catch {
-        errorMessage = error.message || 'Failed to read response';
-      }
-    }
-    throw new Error(errorMessage);
-  }
+  const data = await invokeAiFunction<{
+    status: VideoTask['status'];
+    progress?: number;
+    videoUrl?: string;
+    error?: string;
+  }>({ type: 'video-check', predictionId });
 
   return {
     id: predictionId,

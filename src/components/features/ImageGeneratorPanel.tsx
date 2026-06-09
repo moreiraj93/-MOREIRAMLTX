@@ -324,7 +324,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
     }
 
     if (!subscription.subscribed && getRemaining('image') <= 0) {
-      toast.error('You used all 10 free image credits. Subscribe monthly to keep generating.');
+      toast.error('You used all 10 free images for today. Subscribe monthly to keep generating.');
       setShowPricing(true);
       return;
     }
