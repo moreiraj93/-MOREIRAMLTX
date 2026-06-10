@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/react';
-import { Plus, MessageSquare, Trash2, Image, Video, ChevronLeft, ChevronRight, Sparkles, BookOpen, Download, Smile, Crown, LogIn, LogOut, User, Brain, Volume2, VolumeX, Settings, X } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Image, Video, ChevronLeft, ChevronRight, Sparkles, BookOpen, Download, Smile, Crown, LogIn, LogOut, User, Brain, Volume2, VolumeX, Settings, X, Coins } from 'lucide-react';
 import { getAutoSpeak, toggleAutoSpeak } from '@/hooks/useAutoSpeak';
 import ProjectBrain from '@/components/features/ProjectBrain';
 import { Conversation, ChatMode } from '@/types/chat';
@@ -144,32 +143,7 @@ export default function Sidebar({
 
         {/* User Profile Strip */}
         {!collapsed && (
-          <div className="px-3 pt-3 pb-1 space-y-2">
-            <div className="rounded-xl border border-[hsl(265_80%_65%_/_0.25)] bg-[hsl(265_80%_65%_/_0.05)] p-2">
-              <Show when="signed-out">
-                <div className="flex items-center gap-2">
-                  <SignInButton mode="modal">
-                    <button className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-semibold border border-[hsl(4_90%_58%_/_0.45)] text-[hsl(4_90%_58%)] bg-[hsl(4_90%_58%_/_0.08)] hover:bg-[hsl(4_90%_58%_/_0.16)] transition-all">
-                      <LogIn className="w-3 h-3" /> Clerk Sign in
-                    </button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-semibold text-white bg-[hsl(265_80%_65%)] hover:opacity-90 transition-all">
-                      Sign up
-                    </button>
-                  </SignUpButton>
-                </div>
-              </Show>
-              <Show when="signed-in">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-[11px] font-semibold text-foreground">Clerk account</p>
-                    <p className="text-[10px] text-muted-foreground">Profile and session active</p>
-                  </div>
-                  <UserButton afterSignOutUrl="/" />
-                </div>
-              </Show>
-            </div>
+          <div className="px-3 pt-3 pb-1">
             {user ? (
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[hsl(224_15%_10%)] border border-border">
                 <div className="w-7 h-7 rounded-full overflow-hidden bg-[hsl(4_90%_58%_/_0.15)] border border-[hsl(4_90%_58%_/_0.4)] flex items-center justify-center shrink-0">
@@ -197,7 +171,7 @@ export default function Sidebar({
                   {subscription.subscribed ? (
                     <p className="text-[10px] text-[hsl(191_97%_55%)] flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-[hsl(191_97%_55%)] animate-pulse inline-block" />
-                      MockJ {subscription.tier === 'sale' ? 'Intro' : 'Pro'} — Active
+                      MockJ {subscription.tier === 'sale' ? 'Intro' : 'Pro'} - Active
                     </p>
                   ) : (
                     <p className="text-[10px] text-muted-foreground">Free plan</p>
@@ -216,7 +190,7 @@ export default function Sidebar({
                 onClick={() => navigate('/auth')}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:text-[hsl(191_97%_55%)] hover:border-[hsl(191_97%_55%_/_0.4)] transition-all duration-200"
               >
-                  <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5" />
                 Sign in / Create account
               </button>
             )}
@@ -409,6 +383,18 @@ export default function Sidebar({
                 {autoSpeak ? 'ON' : 'OFF'}
               </span>
             )}
+          </button>
+
+          {/* Tokens */}
+          <button
+            onClick={() => navigate('/tokens')}
+            className={cn(
+              'flex items-center gap-2 rounded-lg transition-all duration-200 text-xs font-medium w-full border border-[hsl(38_95%_60%_/_0.45)] text-[hsl(38_95%_60%)] bg-[hsl(38_95%_60%_/_0.08)] hover:bg-[hsl(38_95%_60%_/_0.14)]',
+              collapsed ? 'justify-center p-2' : 'px-3 py-2'
+            )}
+          >
+            <Coins className="w-3.5 h-3.5 shrink-0" />
+            {!collapsed && <span>Tokens</span>}
           </button>
 
           {/* Account / Settings */}

@@ -15,7 +15,7 @@ const data: SEOPageData = {
     { icon: Cpu,          title: 'Multi-Modal Intelligence',desc: 'Chat, code, image generation, video — one copilot handles your entire creative and technical workflow.' },
     { icon: Zap,          title: 'Instant Responses',       desc: 'Streaming token-by-token replies mean near-zero latency. MockJ feels fast because it is.' },
     { icon: MessageSquare,title: 'Deep Reasoning Mode',     desc: 'Activate chain-of-thought reasoning for complex problems that need step-by-step analysis.' },
-    { icon: Volume2,      title: 'ElevenLabs Voice Output', desc: 'MockJ speaks back to you in a natural, human voice — perfect for hands-free workflows.' },
+    { icon: Volume2,      title: 'MLTXPRO Voice Output', desc: 'MockJ speaks back to you in a natural, human voice — perfect for hands-free workflows.' },
   ],
   useCases: [
     { title: 'Software Development', desc: 'Use MockJ as your coding copilot — generate functions, debug errors, write tests, and explain complex code in plain English.' },
@@ -27,18 +27,18 @@ const data: SEOPageData = {
   ],
   faqs: [
     { q: 'What is an AI copilot?', a: 'An AI copilot is a persistent AI assistant that works alongside you — understanding your context, remembering your projects, and helping you complete tasks faster across coding, writing, design, and more.' },
-    { q: 'How does MockJ compare to GitHub Copilot?', a: 'While GitHub Copilot focuses on code completions in your IDE, MockJ 4 is a full-stack copilot — covering code, images, voice, documents, and project memory in a single platform.' },
-    { q: 'Is MockJ 4 better than ChatGPT?', a: 'MockJ 4 combines ChatGPT-level reasoning with voice control, image generation, persistent project memory, and ElevenLabs TTS — making it more versatile for creators and developers.' },
+    { q: 'How is MockJ different from basic coding assistants?', a: 'MockJ 4 is a full-stack copilot covering code, images, voice, documents, and project memory in a single platform.' },
+    { q: 'What makes MockJ 4 different?', a: 'MockJ 4 combines advanced reasoning with voice control, image generation, persistent project memory, and MLTXPRO Voice — making it versatile for creators and developers.' },
     { q: 'Does MockJ remember previous conversations?', a: 'Yes — MockJ stores your conversation history and project knowledge base so it maintains context across sessions without you re-explaining each time.' },
   ],
   comparison: {
-    headers: ['MockJ 4', 'ChatGPT', 'Copilot', 'Claude'],
+    headers: ['MockJ 4', 'Basic chat', 'Code tools', 'Text assistants'],
     rows: [
       { label: 'Voice Commands',        values: [true,  false, false, false] },
       { label: 'Image Generation',      values: [true,  true,  false, false] },
       { label: 'Video Generation',      values: [true,  false, false, false] },
       { label: 'Persistent Memory',     values: [true,  true,  false, false] },
-      { label: 'ElevenLabs TTS',        values: [true,  false, false, false] },
+      { label: 'MLTXPRO Voice',         values: [true,  false, false, false] },
       { label: 'Project Knowledge Base',values: [true,  false, false, false] },
       { label: 'Free Tier',             values: ['Yes', 'Yes', 'Yes', 'Yes'] },
     ],

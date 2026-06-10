@@ -30,6 +30,7 @@ interface WelcomeScreenProps {
   onOpenPromptLibrary?: () => void;
   onOpenPricing?: () => void;
   onOpenAccount?: () => void;
+  onOpenWallet?: () => void;
   onOpenGallery?: () => void;
   tokenBalance?: number;
   tokenCosts?: Record<TokenAction, number>;
@@ -71,7 +72,7 @@ const COMMAND_MODULES: {
   {
     icon: Mic,
     label: 'Voice Commands',
-    desc: 'Speak to MockJ, then hear the response through ElevenLabs.',
+    desc: 'Speak to MockJ, then hear the response through MLTXPRO Voice.',
     action: 'voice',
     color: BLUE,
     prompt: 'Hey MockJ, turn this idea into a hands-free voice command workflow for my crew.',
@@ -150,7 +151,7 @@ const CREW_STACK = [
 ];
 
 const SIGNALS = [
-  { label: 'Voice layer', value: 'ElevenLabs-ready' },
+  { label: 'Voice layer', value: 'MLTXPRO Voice' },
   { label: 'Style code', value: 'MJELTXSJ777111' },
   { label: 'Mode', value: 'Luxury cyberpunk' },
   { label: 'Access', value: 'Free + Pro' },
@@ -164,6 +165,7 @@ export default function WelcomeScreen({
   onOpenPromptLibrary,
   onOpenPricing,
   onOpenAccount,
+  onOpenWallet,
   onOpenGallery,
   tokenBalance = 7711,
   tokenCosts,
@@ -191,6 +193,10 @@ export default function WelcomeScreen({
     }
     if (action === 'account') {
       onOpenAccount?.();
+      return;
+    }
+    if (action === 'wallet') {
+      onOpenWallet?.();
       return;
     }
     if (action === 'gallery') {
@@ -307,7 +313,7 @@ export default function WelcomeScreen({
               </div>
               <p className="mt-3 text-xs leading-5 text-white/55">Token wallet surface for credits, rewards, Pro access, and saved creation spend.</p>
               <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/38">
-                Chat {tokenCosts?.chat ?? 1} · Image {tokenCosts?.image ?? 25} · Video {tokenCosts?.video ?? 100}
+                Chat {tokenCosts?.chat ?? 5} · Image {tokenCosts?.image ?? 50} · Video {tokenCosts?.video ?? 300}
               </p>
               <button
                 onClick={() => handleModule('wallet')}

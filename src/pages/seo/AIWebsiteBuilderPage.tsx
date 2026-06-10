@@ -32,7 +32,7 @@ const data: SEOPageData = {
     { q: 'Does MockJ write SEO-optimized copy?', a: 'Yes — tell MockJ your target keywords and audience, and it writes meta tags, headings, and body copy structured for search engine ranking.' },
   ],
   comparison: {
-    headers: ['MockJ 4', 'Wix AI', 'Framer AI', 'WordPress'],
+    headers: ['MockJ 4', 'Template tools', 'Site builders', 'CMS tools'],
     rows: [
       { label: 'Code Output',          values: [true,  false, false, false] },
       { label: 'AI Image Generation',  values: [true,  false, false, false] },

@@ -1,6 +1,6 @@
 /**
- * useTTS — ElevenLabs text-to-speech hook for MockJ
- * Calls the app backend and plays the returned ElevenLabs audio.
+ * useTTS — MLTXPRO Voice playback hook for MockJ
+ * Calls the app backend and plays the returned voice audio.
  * Manages global playback state so only one message plays at a time.
  */
 

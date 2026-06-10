@@ -22,6 +22,7 @@ interface ChatWindowProps {
   onOpenPromptLibrary?: () => void;
   onOpenPricing?: () => void;
   onOpenAccount?: () => void;
+  onOpenWallet?: () => void;
   onOpenGallery?: () => void;
   tokenBalance?: number;
   tokenCosts?: Record<TokenAction, number>;
@@ -43,6 +44,7 @@ export default function ChatWindow({
   onOpenPromptLibrary,
   onOpenPricing,
   onOpenAccount,
+  onOpenWallet,
   onOpenGallery,
   tokenBalance,
   tokenCosts,
@@ -66,6 +68,7 @@ export default function ChatWindow({
             onOpenPromptLibrary={onOpenPromptLibrary}
             onOpenPricing={onOpenPricing}
             onOpenAccount={onOpenAccount}
+            onOpenWallet={onOpenWallet}
             onOpenGallery={onOpenGallery}
             tokenBalance={tokenBalance}
             tokenCosts={tokenCosts}

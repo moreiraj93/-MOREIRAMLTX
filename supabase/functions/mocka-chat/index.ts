@@ -232,7 +232,7 @@ Deno.serve(async (req: Request) => {
 
       if (!statusRes.ok) {
         const errorText = await statusRes.text();
-        console.error('OnSpace AI video status error:', statusRes.status, errorText);
+        console.error('MockJ video status error:', statusRes.status, errorText);
         return new Response(
           JSON.stringify({ error: `Status check error: ${errorText}` }),
           { status: statusRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -365,16 +365,16 @@ Deno.serve(async (req: Request) => {
 
       const styleHint = styleGuides[style] ?? styleGuides.realistic;
       const modelGuides: Record<string, string> = {
-        'gemini-2.5-flash-image': 'MockJ native Gemini 2.5 Flash Image profile: fast, prompt-faithful, clean commercial output',
-        'hf-flux-dev': 'Hugging Face FLUX.1 dev profile: high detail, cinematic lighting, strong prompt adherence',
-        'hf-flux-schnell': 'Hugging Face FLUX.1 schnell profile: fast iteration, bold composition, clean edges',
-        'hf-sdxl': 'Hugging Face Stable Diffusion XL profile: polished general image generation, balanced realism and art direction',
-        'hf-sd35-large': 'Hugging Face Stable Diffusion 3.5 Large profile: premium photoreal detail, accurate textures, editorial finish',
-        'hf-playground-v25': 'Hugging Face Playground v2.5 profile: graphic polish, vibrant color, social-ready creative direction',
-        'hf-dreamshaper-xl': 'Hugging Face DreamShaper XL profile: stylized fantasy, portrait, and concept art finish',
-        'hf-realvis-xl': 'Hugging Face RealVisXL profile: realistic human portraits, product lighting, natural camera feel',
-        'hf-openjourney': 'Hugging Face OpenJourney profile: cinematic concept-art composition and dramatic painterly detail',
-        'hf-kandinsky-3': 'Hugging Face Kandinsky 3 profile: expressive art direction, rich color, surreal editorial mood',
+        'gemini-2.5-flash-image': 'MockJ Native profile: fast, prompt-faithful, clean commercial output',
+        'hf-flux-dev': 'MockJ Detail profile: high detail, cinematic lighting, strong prompt adherence',
+        'hf-flux-schnell': 'MockJ Draft profile: fast iteration, bold composition, clean edges',
+        'hf-sdxl': 'MockJ Balanced profile: polished general image generation, balanced realism and art direction',
+        'hf-sd35-large': 'MockJ Editorial profile: premium photoreal detail, accurate textures, editorial finish',
+        'hf-playground-v25': 'MockJ Social profile: graphic polish, vibrant color, social-ready creative direction',
+        'hf-dreamshaper-xl': 'MockJ Fantasy profile: stylized fantasy, portrait, and concept art finish',
+        'hf-realvis-xl': 'MockJ Real profile: realistic human portraits, product lighting, natural camera feel',
+        'hf-openjourney': 'MockJ Cinema profile: cinematic concept-art composition and dramatic painterly detail',
+        'hf-kandinsky-3': 'MockJ Expressive profile: expressive art direction, rich color, surreal editorial mood',
       };
       const modelHint = modelGuides[modelVersion] ?? modelGuides['gemini-2.5-flash-image'];
       const isEditing = !!sourceImageDataUrl;
@@ -417,7 +417,7 @@ Deno.serve(async (req: Request) => {
 
       if (!aiResponse.ok) {
         const errorText = await aiResponse.text();
-        console.error('OnSpace AI image error:', aiResponse.status, errorText);
+        console.error('MockJ image service error:', aiResponse.status, errorText);
         return new Response(
           JSON.stringify({ error: `AI image service error: ${errorText}` }),
           { status: aiResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -429,7 +429,7 @@ Deno.serve(async (req: Request) => {
       const altText: string = aiData.choices?.[0]?.message?.content ?? prompt;
 
       if (!imageDataUrl) {
-        console.error('No image data returned from OnSpace AI', JSON.stringify(aiData).slice(0, 300));
+        console.error('No image data returned from MockJ image service', JSON.stringify(aiData).slice(0, 300));
         return new Response(
           JSON.stringify({ error: 'No image was generated' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -502,7 +502,7 @@ Deno.serve(async (req: Request) => {
 
       if (!createRes.ok) {
         const errorText = await createRes.text();
-        console.error('OnSpace AI video create error:', createRes.status, errorText);
+        console.error('MockJ video create error:', createRes.status, errorText);
         return new Response(
           JSON.stringify({ error: `Video service error: ${errorText}` }),
           { status: createRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -564,7 +564,7 @@ Your default mode is casual, energetic, and hype. Use relaxed language, contract
 If the user asks for "professional mode", "formal mode", or the context clearly demands it (legal documents, medical advice, academic work), switch to precise professional language instantly. Switch back to casual when appropriate.
 
 **Core Identity**
-You are MockJ — not GPT, not Gemini, not any other model. Never reference or compare yourself to other AI systems. You're your own thing and you're built different.
+You are MockJ — not any outside model or generator brand. Never reference or compare yourself to other AI systems. You're your own thing and you're built different.
 
 **Reasoning & Problem-Solving**
 - Apply multi-layered reasoning — just deliver it with energy instead of stuffiness
@@ -601,7 +601,7 @@ You're here to help, keep it real, and not cause harm. Maximum helpfulness, zero
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('OnSpace AI streaming error:', response.status, errorText);
+        console.error('MockJ streaming service error:', response.status, errorText);
         return new Response(
           JSON.stringify({ error: `AI service error: ${errorText}` }),
           { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -628,7 +628,7 @@ You're here to help, keep it real, and not cause harm. Maximum helpfulness, zero
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('OnSpace AI error:', response.status, errorText);
+        console.error('MockJ service error:', response.status, errorText);
         return new Response(
           JSON.stringify({ error: `AI service error: ${errorText}` }),
           { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

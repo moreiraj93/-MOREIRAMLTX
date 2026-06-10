@@ -29,7 +29,7 @@ Deno.serve(async (req: Request) => {
   try {
     const apiKey = Deno.env.get('ELEVENLABS_API_KEY');
     if (!apiKey) {
-      console.error('[elevenlabs-tts] ELEVENLABS_API_KEY not configured');
+      console.error('[mltxpro-voice] voice API key not configured');
       return new Response(
         JSON.stringify({ error: 'TTS service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -45,9 +45,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Clean and cap the text (ElevenLabs charges per character)
+    // Clean and cap the text before sending it to the voice service.
     const cleanText = stripMarkdown(text).slice(0, 5000);
-    console.log(`[elevenlabs-tts] Generating TTS, chars=${cleanText.length}, voice=${ELEVENLABS_VOICE_ID}`);
+    console.log(`[mltxpro-voice] Generating voice audio, chars=${cleanText.length}`);
 
     const response = await fetch(ELEVENLABS_API_URL, {
       method: 'POST',
@@ -58,7 +58,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         text: cleanText,
-        model_id: 'eleven_turbo_v2_5',   // fastest + high quality
+        model_id: 'eleven_turbo_v2_5',
         voice_settings: {
           stability: 0.45,
           similarity_boost: 0.8,
@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[elevenlabs-tts] ElevenLabs error:', response.status, errorText.slice(0, 300));
+      console.error('[mltxpro-voice] voice service error:', response.status, errorText.slice(0, 300));
       return new Response(
         JSON.stringify({ error: `TTS error: ${errorText.slice(0, 200)}` }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -78,7 +78,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const audioBuffer = await response.arrayBuffer();
-    console.log(`[elevenlabs-tts] Audio generated, bytes=${audioBuffer.byteLength}`);
+    console.log(`[mltxpro-voice] Audio generated, bytes=${audioBuffer.byteLength}`);
 
     return new Response(audioBuffer, {
       headers: {
@@ -88,7 +88,7 @@ Deno.serve(async (req: Request) => {
       },
     });
   } catch (err) {
-    console.error('[elevenlabs-tts] Unexpected error:', err);
+    console.error('[mltxpro-voice] Unexpected error:', err);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

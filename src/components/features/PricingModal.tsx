@@ -29,7 +29,7 @@ export const PLANS = {
     features: [
       'Unlimited AI chat with Deep Reasoning',
       'Image generation & editing (all styles)',
-      'Video generation with Sora 2',
+      'MLTXPRO video generation',
       'All personality presets',
       'Priority response speed',
       'Export & history (unlimited)',

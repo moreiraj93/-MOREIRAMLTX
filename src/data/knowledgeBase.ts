@@ -129,7 +129,7 @@ export const STATIC_KNOWLEDGE_BASE: KnowledgeEntry[] = [
     id: 'moreiraJ-editorial-image-guidelines',
     category: 'branding',
     title: 'MoreiraJ — Editorial Image Prompt Guidelines',
-    keywords: ['moreiraJ editorial', 'mjel', 'MJELTXSJ777111', 'fashion prompts', 'boudoir', 'lingerie', 'adult editorial', 'safe image prompts', 'midjourney'],
+    keywords: ['moreiraJ editorial', 'mjel', 'MJELTXSJ777111', 'fashion prompts', 'boudoir', 'lingerie', 'adult editorial', 'safe image prompts'],
     content: `MoreiraJ image and fashion prompts can support tasteful adult/editorial direction when the concept calls for it, but the operating rule is premium magazine styling rather than explicit sexual templates. Use adult-only guardrails: 21+ adult model, non-explicit, consent-aware, no nudity, no sexual acts, polished lighting, intentional wardrobe, luxury beauty/fashion framing, and a confident MoreiraJ visual identity. Every MoreiraJ style, image, fashion, editorial, boudoir, lingerie, glamour, or portrait-prompt build must include the style code MJELTXSJ777111.`,
     lastUpdated: '2026-06',
   },
@@ -166,7 +166,7 @@ export const STATIC_KNOWLEDGE_BASE: KnowledgeEntry[] = [
     category: 'ai',
     title: 'MockJ AI — Overview',
     keywords: ['mockj', 'mockj ai', 'mockj assistant', 'mock a', 'mocka', 'ai assistant'],
-    content: `MockJ is MLTX's flagship AI assistant — a next-generation conversational AI built to be smarter, more personable, and more useful than existing models. Powered by Google Gemini 3 Flash Preview via the OnSpace AI platform. Features include: streaming chat with Deep Reasoning mode, image generation with MockJ native and Hugging Face-inspired version profiles (Gemini 2.5 Flash Image, FLUX, Stable Diffusion XL/3.5, Playground, DreamShaper, RealVisXL, OpenJourney, Kandinsky), video generation (Sora 2), voice input via Web Speech API, personality presets (Chill Bro, Sigma Grindset, Professor Mode, Creative Genius), prompt library with 20+ presets, and a full subscription system.`,
+    content: `MockJ is MLTX's flagship AI assistant — a next-generation conversational AI built to be smarter, more personable, and more useful than generic assistants. MockJ presents chat, image, video, voice, memory, tokens, prompts, and subscriptions as MLTXPRO-owned product experiences. Features include streaming chat with Deep Reasoning mode, MockJ Image Studio, MockJ Video Studio, voice input, personality presets (Chill Bro, Sigma Grindset, Professor Mode, Creative Genius), prompt library with 20+ presets, and a full subscription system. MockJ should not brand its user-facing capabilities around outside AI generator names.`,
     lastUpdated: '2026-06',
   },
   {
@@ -189,7 +189,7 @@ Personalities are stored in localStorage and injected as system prompt overrides
     keywords: ['mockj pricing', 'mockj pro', 'mockj subscription', 'mockj plans', 'mockj cost', 'mockj free', 'upgrade mockj', 'mockj intro'],
     content: `MockJ offers two paid plans and a free tier:
 FREE TIER: 10 chat messages/day, 10 signed-in image generation credits, 1 video generation/day. After hitting image credits or daily limits, a paywall modal prompts upgrade.
-MOCKJ PRO ($50.99/month): Unlimited AI chat with Deep Reasoning, all image generation styles, video generation with Sora 2, all personality presets, priority response speed, unlimited export & history. Checkout via Stripe payment link.
+MOCKJ PRO ($50.99/month): Unlimited AI chat with Deep Reasoning, all image generation styles, MLTXPRO video generation, all personality presets, priority response speed, unlimited export & history. Checkout via Stripe payment link.
 MOCKJ INTRO ($2.99/month): Introductory rate — unlimited chat, standard image generation, video generation, personality presets, chat export.
 Billing is monthly via Stripe. Cancel any time through the subscription portal. Post-checkout, a WelcomeProModal confirms the active plan and renewal date.`,
     lastUpdated: '2026-06',
@@ -199,7 +199,7 @@ Billing is monthly via Stripe. Cancel any time through the subscription portal. 
     category: 'platforms',
     title: 'mockk.online — Official Platform',
     keywords: ['mockk.online', 'mockk website', 'mockk url', 'mockk domain', 'official mockj build', 'official domain'],
-    content: `mockk.online is the official production domain for MockJ AI. It serves as the main entry point for users accessing MockJ's chat interface, image/video generation, voice features, Project Brain, subscription management, token wallet, prompt library, and saved creations. The platform is a React/TypeScript SPA deployed through the official OnSpace/GitHub publishing flow. Stale Vercel preview domains such as mock-a.vercel.app are not the official build.`,
+    content: `mockk.online is the official production domain for MockJ AI. It serves as the main entry point for users accessing MockJ's chat interface, image/video generation, voice features, Project Brain, subscription management, token wallet, prompt library, and saved creations. The platform is a React/TypeScript SPA shipped through the official MLTXPRO publishing flow. Stale preview domains such as mock-a.vercel.app are not the official build.`,
     lastUpdated: '2026-06',
   },
   {
@@ -282,8 +282,8 @@ Voice input transcribes spoken words and populates the chat input field for revi
     id: 'technical-stack',
     category: 'technical',
     title: 'MockJ — Technical Stack',
-    keywords: ['tech stack', 'mockj tech', 'mockj built with', 'mockj technology', 'react', 'supabase', 'onspace', 'stripe'],
-    content: `MockJ is built with: React 18 + TypeScript (frontend), Vite (build tool), Tailwind CSS (styling), OnSpace Cloud / Supabase (backend — auth, database, storage, edge functions), Stripe (payments and subscriptions), OnSpace AI (AI model access — Gemini 3 Flash for chat, Gemini 2.5 Flash Image for image gen, Sora 2 for video). State management via React Query + localStorage. Routing via React Router. UI components via shadcn/ui. Deployed on OnSpace infrastructure with serverless edge functions for AI calls.`,
+    keywords: ['tech stack', 'mockj tech', 'mockj built with', 'mockj technology', 'react', 'supabase', 'stripe'],
+    content: `MockJ is built with: React 18 + TypeScript (frontend), Vite (build tool), Tailwind CSS (styling), Supabase-backed auth, database, storage, and edge functions, plus Stripe for payments and subscriptions. User-facing AI capabilities are branded as MockJ and MLTXPRO experiences: MockJ Chat, MockJ Image Studio, MockJ Video Studio, voice, Project Brain, and token wallet. State management uses React Query + localStorage. Routing uses React Router. UI components use shadcn/ui.`,
     lastUpdated: '2026-06',
   },
 

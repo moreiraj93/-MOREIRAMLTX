@@ -9,6 +9,7 @@ import AuthPage from "./pages/AuthPage";
 import SuccessPage from "./pages/SuccessPage";
 import AccountPage from "./pages/AccountPage";
 import LandingPage from "./pages/LandingPage";
+import TokensPage from "./pages/TokensPage";
 import AICopilotPage from "./pages/seo/AICopilotPage";
 import AIVoiceAssistantPage from "./pages/seo/AIVoiceAssistantPage";
 import AIImageGeneratorPage from "./pages/seo/AIImageGeneratorPage";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/account" element={<AccountPage />} />
+            <Route path="/tokens" element={<TokensPage />} />
             <Route path="/landing" element={<LandingPage />} />
             <Route path="/ai-copilot" element={<AICopilotPage />} />
             <Route path="/ai-voice-assistant" element={<AIVoiceAssistantPage />} />

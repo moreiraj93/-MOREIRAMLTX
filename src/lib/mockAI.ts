@@ -94,7 +94,7 @@ export interface ChatHistoryMessage {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Streaming chat via OnSpace AI Edge Function
+// Streaming chat via MLTXPRO AI Edge Function
 // Returns an async generator that yields text chunks
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -176,7 +176,7 @@ export async function generateChatResponse(
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Image generation / editing via OnSpace AI
+// Image generation / editing via MockJ Image Studio
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function generateImage(request: ImageGenRequest): Promise<string> {
@@ -200,7 +200,7 @@ export async function generateImage(request: ImageGenRequest): Promise<string> {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Video generation — async task-based via OnSpace AI (Sora-2)
+// Video generation — async task-based via MockJ Video Studio
 // ──────────────────────────────────────────────────────────────────────────────
 
 // Map UI duration string to seconds number
@@ -209,7 +209,7 @@ function durationToSeconds(d: string): number {
   return [4, 8, 12].includes(n) ? n : 8;
 }
 
-// Map UI aspect ratio to Sora aspect_ratio param
+// Map UI aspect ratio to video engine aspect_ratio param
 function mapAspectRatio(ratio: string): string {
   if (ratio === '9:16') return 'portrait';
   if (ratio === '1:1') return 'square';

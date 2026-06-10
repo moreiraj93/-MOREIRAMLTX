@@ -26,13 +26,13 @@ const data: SEOPageData = {
     { title: 'Interior Design Concepts', desc: 'Visualize room layouts, furniture combinations, and décor styles before committing to expensive purchases.' },
   ],
   faqs: [
-    { q: 'What AI model powers MockJ image generation?', a: 'MockJ uses OnSpace AI\'s proprietary image generation models, delivering high-quality results at 1K, 2K, and 4K resolutions.' },
+    { q: 'What powers MockJ image generation?', a: 'MockJ image generation runs as an MLTXPRO-owned Image Studio experience, delivering high-quality results at 1K, 2K, and 4K resolutions.' },
     { q: 'Can I use generated images for commercial purposes?', a: 'Yes — MockJ Pro includes commercial licensing for all generated images. Free tier images are for personal use only.' },
     { q: 'What is image-to-image generation?', a: 'Image-to-image lets you upload a reference photo and transform it with prompts — changing style, adding elements, or creating variations while preserving the original composition.' },
     { q: 'How does Character Consistency work?', a: 'Character Consistency mode analyzes your reference image and maintains key facial features, body proportions, and visual style across multiple generations — ideal for sequential artwork.' },
   ],
   comparison: {
-    headers: ['MockJ 4', 'DALL-E 3', 'Midjourney', 'Stable Diff.'],
+    headers: ['MockJ 4', 'Basic tools', 'Prompt apps', 'Legacy flows'],
     rows: [
       { label: 'Image-to-Image',      values: [true,  false, true,  true] },
       { label: 'Voice Control',       values: [true,  false, false, false] },

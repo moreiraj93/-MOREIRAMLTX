@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect, TouchEvent } from 'react';
-import { useUser as useClerkUser } from '@clerk/react';
 import {
   Image, Download, RefreshCw, Sparkles, Zap, Star, Upload, X, Wand2,
   Mic, MicOff, Shield, Droplets, User, Layers, Move, Crown,
@@ -70,16 +69,16 @@ const QUALITY_OPTIONS = [
 ];
 
 const IMAGE_MODEL_VERSIONS = [
-  { value: 'gemini-2.5-flash-image', label: 'Gemini 2.5 Flash', source: 'MockJ Native', desc: 'Fast OnSpace image engine' },
-  { value: 'hf-flux-dev', label: 'FLUX.1 Dev', source: 'Hugging Face', desc: 'High-detail premium renders' },
-  { value: 'hf-flux-schnell', label: 'FLUX.1 Schnell', source: 'Hugging Face', desc: 'Fast drafts and iteration' },
-  { value: 'hf-sdxl', label: 'Stable Diffusion XL', source: 'Hugging Face', desc: 'Balanced creative image model' },
-  { value: 'hf-sd35-large', label: 'Stable Diffusion 3.5', source: 'Hugging Face', desc: 'Detailed photoreal/editorial' },
-  { value: 'hf-playground-v25', label: 'Playground v2.5', source: 'Hugging Face', desc: 'Polished social graphics' },
-  { value: 'hf-dreamshaper-xl', label: 'DreamShaper XL', source: 'Hugging Face', desc: 'Fantasy and concept art' },
-  { value: 'hf-realvis-xl', label: 'RealVisXL', source: 'Hugging Face', desc: 'Natural portraits and products' },
-  { value: 'hf-openjourney', label: 'OpenJourney', source: 'Hugging Face', desc: 'Cinematic concept look' },
-  { value: 'hf-kandinsky-3', label: 'Kandinsky 3', source: 'Hugging Face', desc: 'Expressive art direction' },
+  { value: 'gemini-2.5-flash-image', label: 'MockJ Native', source: 'MLTXPRO', desc: 'Fast MLTXPRO image engine' },
+  { value: 'hf-flux-dev', label: 'MockJ Detail', source: 'MLTXPRO', desc: 'High-detail premium renders' },
+  { value: 'hf-flux-schnell', label: 'MockJ Draft', source: 'MLTXPRO', desc: 'Fast drafts and iteration' },
+  { value: 'hf-sdxl', label: 'MockJ Balanced', source: 'MLTXPRO', desc: 'Balanced creative image model' },
+  { value: 'hf-sd35-large', label: 'MockJ Editorial', source: 'MLTXPRO', desc: 'Detailed photoreal/editorial output' },
+  { value: 'hf-playground-v25', label: 'MockJ Social', source: 'MLTXPRO', desc: 'Polished social graphics' },
+  { value: 'hf-dreamshaper-xl', label: 'MockJ Fantasy', source: 'MLTXPRO', desc: 'Fantasy and concept art' },
+  { value: 'hf-realvis-xl', label: 'MockJ Real', source: 'MLTXPRO', desc: 'Natural portraits and products' },
+  { value: 'hf-openjourney', label: 'MockJ Cinema', source: 'MLTXPRO', desc: 'Cinematic concept look' },
+  { value: 'hf-kandinsky-3', label: 'MockJ Expressive', source: 'MLTXPRO', desc: 'Expressive art direction' },
 ] as const;
 
 type ImageModelVersion = (typeof IMAGE_MODEL_VERSIONS)[number]['value'];
@@ -155,7 +154,6 @@ function useVoiceInput(onTranscript: (t: string) => void) {
 export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageGeneratorPanelProps) {
   const navigate = useNavigate();
   const { user, subscription } = useAuth();
-  const { isSignedIn: clerkSignedIn } = useClerkUser();
   const { consumeOrBlock, getRemaining, getLimitLabel } = useUsageLimits();
   const { tokenBalance, tokenCosts, canSpendTokens, spendTokens } = useTokenWallet();
   const [panelMode, setPanelMode] = useState<PanelMode>(initialMode);
@@ -308,12 +306,8 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
     const useQuality = overrideQuality ?? quality;
 
     if (!user) {
-      toast.error(
-        clerkSignedIn
-          ? 'Finish MockJ account sign-in to use Image Studio. Storage, tokens, and billing still need the app account session.'
-          : 'Sign in required to use MockJ Image Studio.'
-      );
-      navigate('/auth');
+      toast.error('Create a free MockJ account to use Image Studio and MLTX tokens.');
+      navigate('/auth?mode=signup');
       return;
     }
 

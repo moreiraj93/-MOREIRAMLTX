@@ -47,7 +47,7 @@ const FAQS = [
   },
   {
     q: 'How does the voice command feature work?',
-    a: 'MockJ uses browser-native Web Speech API combined with ElevenLabs for natural voice output. Speak your request — MockJ responds in real-time, reads answers aloud, and can execute tasks like generating images or writing code based on what you say.',
+    a: 'MockJ uses browser-native speech input combined with MLTXPRO Voice for natural voice output. Speak your request — MockJ responds in real-time, reads answers aloud, and can execute tasks like generating images or writing code based on what you say.',
   },
   {
     q: 'What is Project Memory?',
@@ -63,7 +63,7 @@ const FAQS = [
   },
   {
     q: 'What AI models power MockJ 4?',
-    a: 'MockJ 4 uses the latest Gemini and GPT models for chat and reasoning, Sora 2 for video generation, and proprietary OnSpace AI models for image generation and editing.',
+    a: 'MockJ 4 runs through MLTXPRO-owned chat, image, and video experiences. The app presents these capabilities as MockJ tools, not third-party generator brands.',
   },
 ];
 
@@ -81,7 +81,7 @@ const PLANS = [
     period: '/mo',
     highlight: true,
     badge: 'Most Popular',
-    features: ['Unlimited chat messages', 'Unlimited image generations', 'Unlimited video generations', 'ElevenLabs voice output', 'Full Project Memory & editing', 'Commercial image license', 'Advanced creator tools', 'Priority AI models', 'Priority support'],
+    features: ['Unlimited chat messages', 'Unlimited image generations', 'Unlimited video generations', 'MLTXPRO voice output', 'Full Project Memory & editing', 'Commercial image license', 'Advanced creator tools', 'Priority MockJ processing', 'Priority support'],
   },
   {
     name: 'Intro',

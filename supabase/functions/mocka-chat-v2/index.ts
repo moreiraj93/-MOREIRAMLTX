@@ -263,16 +263,16 @@ function envModelOverride(version: string) {
 
 function imageModel(version = 'gemini-2.5-flash-image') {
   const modelGuides: Record<string, string> = {
-    'gemini-2.5-flash-image': 'MockJ native Gemini 2.5 Flash Image profile: fast, prompt-faithful, clean commercial output',
-    'hf-flux-dev': 'Hugging Face FLUX.1 dev profile: high detail, cinematic lighting, strong prompt adherence',
-    'hf-flux-schnell': 'Hugging Face FLUX.1 schnell profile: fast iteration, bold composition, clean edges',
-    'hf-sdxl': 'Hugging Face Stable Diffusion XL profile: polished general image generation, balanced realism and art direction',
-    'hf-sd35-large': 'Hugging Face Stable Diffusion 3.5 Large profile: premium photoreal detail, accurate textures, editorial finish',
-    'hf-playground-v25': 'Hugging Face Playground v2.5 profile: graphic polish, vibrant color, social-ready creative direction',
-    'hf-dreamshaper-xl': 'Hugging Face DreamShaper XL profile: stylized fantasy, portrait, and concept art finish',
-    'hf-realvis-xl': 'Hugging Face RealVisXL profile: realistic human portraits, product lighting, natural camera feel',
-    'hf-openjourney': 'Hugging Face OpenJourney profile: cinematic concept-art composition and dramatic painterly detail',
-    'hf-kandinsky-3': 'Hugging Face Kandinsky 3 profile: expressive art direction, rich color, surreal editorial mood',
+    'gemini-2.5-flash-image': 'MockJ Native profile: fast, prompt-faithful, clean commercial output',
+    'hf-flux-dev': 'MockJ Detail profile: high detail, cinematic lighting, strong prompt adherence',
+    'hf-flux-schnell': 'MockJ Draft profile: fast iteration, bold composition, clean edges',
+    'hf-sdxl': 'MockJ Balanced profile: polished general image generation, balanced realism and art direction',
+    'hf-sd35-large': 'MockJ Editorial profile: premium photoreal detail, accurate textures, editorial finish',
+    'hf-playground-v25': 'MockJ Social profile: graphic polish, vibrant color, social-ready creative direction',
+    'hf-dreamshaper-xl': 'MockJ Fantasy profile: stylized fantasy, portrait, and concept art finish',
+    'hf-realvis-xl': 'MockJ Real profile: realistic human portraits, product lighting, natural camera feel',
+    'hf-openjourney': 'MockJ Cinema profile: cinematic concept-art composition and dramatic painterly detail',
+    'hf-kandinsky-3': 'MockJ Expressive profile: expressive art direction, rich color, surreal editorial mood',
   };
 
   return {

@@ -116,10 +116,32 @@ export function useAuthActions() {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const redirectTo = `${window.location.origin}/auth`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
+        },
+      });
+      if (error) throw error;
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Google sign-in failed');
+      setLoading(false);
+    }
+  };
+
   return {
     sendOtp,
     verifyOtpAndSetPassword,
     signInWithPassword,
+    signInWithGoogle,
     resetPassword,
     updatePassword,
     loading,

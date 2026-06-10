@@ -400,7 +400,7 @@ export default function AccountPage() {
                 'Unlimited chat messages',
                 'Unlimited image generations',
                 'Unlimited video generations',
-                'ElevenLabs voice output',
+                'MLTXPRO voice output',
                 'Advanced creator tools',
                 'Commercial image license',
               ].map(feat => (
@@ -419,7 +419,7 @@ export default function AccountPage() {
                 <div>
                   <p className="text-sm font-semibold text-foreground">Upgrade to MockJ Pro</p>
                   <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    Unlock unlimited chat, images, videos, ElevenLabs voice, and advanced creator tools.
+                    Unlock unlimited chat, images, videos, MLTXPRO Voice, and advanced creator tools.
                   </p>
                   <button
                     onClick={() => navigate('/')}

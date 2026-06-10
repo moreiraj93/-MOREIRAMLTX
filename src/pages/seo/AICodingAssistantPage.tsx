@@ -28,11 +28,11 @@ const data: SEOPageData = {
   faqs: [
     { q: 'What programming languages does MockJ support?', a: 'MockJ supports all major programming languages including Python, JavaScript/TypeScript, Rust, Go, Java, C++, Swift, Kotlin, SQL, Solidity, and more.' },
     { q: 'Can MockJ access my codebase?', a: 'MockJ doesn\'t directly access your files, but you can paste code snippets and use the Project Brain to store architecture notes, conventions, and component descriptions that MockJ references in every response.' },
-    { q: 'How is MockJ different from GitHub Copilot?', a: 'Copilot focuses on inline code completions inside VS Code. MockJ is a conversational pair programmer — you can discuss architecture, debug errors, learn concepts, and generate entire modules through natural dialogue.' },
+    { q: 'How is MockJ different from basic code completion tools?', a: 'Basic code completion focuses on inline suggestions. MockJ is a conversational pair programmer — you can discuss architecture, debug errors, learn concepts, and generate entire modules through natural dialogue.' },
     { q: 'Does MockJ support voice for coding?', a: 'Yes — you can describe functions verbally using MockJ\'s voice input, and hear code explanations read aloud. Great for reviewing logic while keeping your eyes on the screen.' },
   ],
   comparison: {
-    headers: ['MockJ 4', 'GitHub Copilot', 'Cursor', 'ChatGPT'],
+    headers: ['MockJ 4', 'Completion tools', 'IDE helpers', 'Chat tools'],
     rows: [
       { label: 'Conversational Coding',  values: [true,  false, true,  true] },
       { label: 'Voice Input/Output',     values: [true,  false, false, false] },
