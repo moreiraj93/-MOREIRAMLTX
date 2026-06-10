@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { allocationRecordFromStripeEvent } from './revenueAllocation.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -10,7 +11,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distPath = path.resolve(__dirname, '../dist');
 
 app.set('trust proxy', true);
-app.use(express.json());
 
 app.use('/api', (req, res, next) => {
   const origin = process.env.CORS_ORIGIN || req.get('origin') || '*';
@@ -23,6 +23,51 @@ app.use('/api', (req, res, next) => {
   }
   next();
 });
+
+app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const signature = req.get('stripe-signature');
+    if (!signature) {
+      res.status(400).json({ error: 'Stripe signature header not provided' });
+      return;
+    }
+
+    const event = stripeClient().webhooks.constructEvent(
+      req.body,
+      signature,
+      requiredEnv('STRIPE_WEBHOOK_SECRET'),
+    );
+    const record = allocationRecordFromStripeEvent(event);
+
+    if (!record) {
+      res.json({ received: true, processed: false });
+      return;
+    }
+
+    const { error } = await supabaseAdminClient()
+      .from('revenue_allocations')
+      .insert(record);
+
+    if (error?.code === '23505') {
+      res.json({ received: true, processed: false, duplicate: true });
+      return;
+    }
+
+    if (error) throw error;
+
+    res.json({
+      received: true,
+      processed: true,
+      status: record.status,
+      owner_sweep_cents: record.owner_sweep_cents,
+    });
+  } catch (error) {
+    const status = error.statusCode || 400;
+    res.status(status).json({ error: error.message || 'Failed to process Stripe webhook' });
+  }
+});
+
+app.use(express.json());
 
 function requiredEnv(name, aliases = []) {
   for (const key of [name, ...aliases]) {
