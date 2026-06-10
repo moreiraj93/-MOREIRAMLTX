@@ -35,6 +35,10 @@ export const LARGE_DEAL_RATES: RevenueAllocationRates = {
 };
 
 function normalizeTotalValue(totalValue: RevenueAllocationInput['total_value']): number {
+  if (typeof totalValue === 'string' && totalValue.trim() === '') {
+    throw new Error('total_value must be a finite number.');
+  }
+
   const value = typeof totalValue === 'string' ? Number(totalValue.trim()) : totalValue;
 
   if (!Number.isFinite(value)) {
@@ -49,7 +53,14 @@ function normalizeTotalValue(totalValue: RevenueAllocationInput['total_value']):
 }
 
 function roundCurrency(value: number): number {
-  return Number((Math.round((value + Number.EPSILON) * 100) / 100).toFixed(2));
+  return Number((Math.round(value * 100) / 100).toFixed(2));
+}
+
+function allocateCurrency(totalValue: number, rate: number): number {
+  const totalCents = Math.round(totalValue * 100);
+  const allocatedCents = Math.round(totalCents * rate);
+
+  return roundCurrency(allocatedCents / 100);
 }
 
 export function getRevenueAllocationRates(totalValue: number): RevenueAllocationRates {
@@ -63,9 +74,9 @@ export function allocateRevenue(
   const totalValue = normalizeTotalValue(input.total_value);
   const { taxRate, opsRate, ownerRate } = getRevenueAllocationRates(totalValue);
 
-  const taxReserve = roundCurrency(totalValue * taxRate);
-  const opsFund = roundCurrency(totalValue * opsRate);
-  const ownerSweep = roundCurrency(totalValue * ownerRate);
+  const taxReserve = allocateCurrency(totalValue, taxRate);
+  const opsFund = allocateCurrency(totalValue, opsRate);
+  const ownerSweep = allocateCurrency(totalValue, ownerRate);
 
   return {
     tax_reserve: taxReserve,
