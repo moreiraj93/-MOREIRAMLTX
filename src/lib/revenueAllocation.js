@@ -47,8 +47,8 @@ export function allocateRevenue(input, options = {}) {
   const totalCents = parseTotalValue(input?.total_value);
   const rates = totalCents > BIG_DEAL_THRESHOLD_CENTS ? BIG_DEAL_RATES : SMALL_DEAL_RATES;
   const taxReserveCents = centsByRate(totalCents, rates.tax);
-  const opsFundCents = centsByRate(totalCents, rates.ops);
-  const ownerSweepCents = totalCents - taxReserveCents - opsFundCents;
+  const ownerSweepCents = centsByRate(totalCents, rates.owner);
+  const opsFundCents = totalCents - taxReserveCents - ownerSweepCents;
   const now = options.now instanceof Date ? options.now : new Date();
 
   return {
