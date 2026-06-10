@@ -34,10 +34,15 @@ export interface ImageGenRequest {
   privateMode?: boolean;
 }
 
+export type VideoStyle = 'cinematic' | 'animation' | 'documentary' | 'abstract';
+export type VideoDuration = '4s' | '8s' | '12s';
+export type VideoAspectRatio = '16:9' | '9:16' | '1:1';
+
 export interface VideoGenRequest {
   prompt: string;
-  duration: '5s' | '10s' | '15s';
-  style: 'cinematic' | 'animation' | 'documentary' | 'abstract';
+  duration: VideoDuration;
+  style: VideoStyle;
+  aspectRatio?: VideoAspectRatio;
 }
 
 export interface VideoTask {

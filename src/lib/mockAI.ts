@@ -206,7 +206,7 @@ export async function generateImage(request: ImageGenRequest): Promise<string> {
 // Map UI duration string to seconds number
 function durationToSeconds(d: string): number {
   const n = parseInt(d, 10);
-  return isNaN(n) ? 5 : n;
+  return [4, 8, 12].includes(n) ? n : 8;
 }
 
 // Map UI aspect ratio to Sora aspect_ratio param
@@ -216,10 +216,11 @@ function mapAspectRatio(ratio: string): string {
   return 'landscape';
 }
 
-export async function createVideoTask(request: VideoGenRequest & { aspectRatio?: string }): Promise<VideoTask> {
+export async function createVideoTask(request: VideoGenRequest): Promise<VideoTask> {
   const data = await invokeAiFunction<{ id: string; status?: VideoTask['status'] }>({
     type: 'video-create',
     prompt: request.prompt,
+    style: request.style,
     duration: durationToSeconds(request.duration),
     aspectRatio: mapAspectRatio(request.aspectRatio ?? '16:9'),
   });

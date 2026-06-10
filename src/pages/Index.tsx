@@ -257,7 +257,7 @@ export default function Index() {
           spendTokens('image');
         }
       } else if (chatMode === 'video') {
-        const videoResult = await generateVideo({ prompt: text, style: 'cinematic', duration: '10s' });
+        const videoResult = await generateVideo({ prompt: text, style: 'cinematic', duration: '8s', aspectRatio: '16:9' });
         const aiMsg = buildMessage(
           'assistant',
           `Video generated: ${videoResult.label} · ${videoResult.duration}`,

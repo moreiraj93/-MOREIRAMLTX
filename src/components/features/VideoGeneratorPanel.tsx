@@ -13,12 +13,12 @@ const STYLES: { value: VideoGenRequest['style']; label: string; desc: string; em
 ];
 
 const DURATIONS: { value: VideoGenRequest['duration']; label: string; seconds: number }[] = [
-  { value: '5s', label: '5 sec', seconds: 5 },
-  { value: '10s', label: '10 sec', seconds: 10 },
-  { value: '15s', label: '15 sec', seconds: 15 },
+  { value: '4s', label: '4 sec', seconds: 4 },
+  { value: '8s', label: '8 sec', seconds: 8 },
+  { value: '12s', label: '12 sec', seconds: 12 },
 ];
 
-const RATIOS = [
+const RATIOS: { value: NonNullable<VideoGenRequest['aspectRatio']>; label: string; desc: string; soraRatio: string }[] = [
   { value: '16:9', label: '16:9', desc: 'Landscape', soraRatio: 'landscape' },
   { value: '9:16', label: '9:16', desc: 'Portrait', soraRatio: 'portrait' },
   { value: '1:1', label: '1:1', desc: 'Square', soraRatio: 'square' },
@@ -56,8 +56,8 @@ export default function VideoGeneratorPanel() {
   const [panelMode, setPanelMode] = useState<PanelMode>('generate');
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState<VideoGenRequest['style']>('cinematic');
-  const [duration, setDuration] = useState<VideoGenRequest['duration']>('5s');
-  const [ratio, setRatio] = useState('16:9');
+  const [duration, setDuration] = useState<VideoGenRequest['duration']>('8s');
+  const [ratio, setRatio] = useState<NonNullable<VideoGenRequest['aspectRatio']>>('16:9');
 
   const [taskStatus, setTaskStatus] = useState<TaskStatus>('idle');
   const [predictionId, setPredictionId] = useState<string | null>(null);
@@ -222,6 +222,9 @@ export default function VideoGeneratorPanel() {
   };
 
   const isLoading = taskStatus === 'creating' || taskStatus === 'polling';
+  const selectedStyle = STYLES.find(s => s.value === style) ?? STYLES[0];
+  const selectedDuration = DURATIONS.find(d => d.value === duration) ?? DURATIONS[1];
+  const selectedRatio = RATIOS.find(r => r.value === ratio) ?? RATIOS[0];
 
   const formatElapsed = (s: number) => {
     const m = Math.floor(s / 60);
@@ -315,7 +318,11 @@ export default function VideoGeneratorPanel() {
                       : 'border-border text-muted-foreground hover:border-[hsl(224_15%_22%)] hover:text-foreground'
                   )}
                 >
-                  <span>{s.emoji}</span> {s.label}
+                  <span aria-hidden="true">{s.emoji}</span>
+                  <span className="flex min-w-0 flex-col text-left leading-tight">
+                    <span className="font-semibold">{s.label}</span>
+                    <span className="text-[9px] opacity-75">{s.desc}</span>
+                  </span>
                 </button>
               ))}
             </div>
@@ -552,7 +559,9 @@ export default function VideoGeneratorPanel() {
             </p>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(191_97%_55%_/_0.08)] border border-[hsl(191_97%_55%_/_0.2)]">
               <Clock className="w-3 h-3 text-[hsl(191_97%_55%)]" />
-              <span className="text-[11px] text-[hsl(191_97%_55%)]">Generation takes 1–3 minutes</span>
+              <span className="text-[11px] text-[hsl(191_97%_55%)]">
+                {selectedStyle.label} only · {selectedDuration.label} · {selectedRatio.desc} {selectedRatio.label} · 1–3 min
+              </span>
             </div>
           </div>
         )}
@@ -653,7 +662,7 @@ export default function VideoGeneratorPanel() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground truncate">"{prompt}"</p>
                 <p className="text-[10px] text-muted-foreground/50 mt-0.5">
-                  {STYLES.find(s => s.value === style)?.label} · {duration} · {ratio}
+                  {selectedStyle.label} only · {selectedDuration.label} · {selectedRatio.desc} {selectedRatio.label}
                   {' · '}{formatElapsed(elapsedSeconds)} to generate
                 </p>
               </div>
