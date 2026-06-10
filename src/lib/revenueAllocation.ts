@@ -17,7 +17,7 @@ export interface RevenueAllocationResult {
 
 interface AllocationRates {
   taxRate: number;
-  opsRate: number;
+  ownerRate: number;
 }
 
 const BIG_DEAL_THRESHOLD_CENTS = 1_000_000;
@@ -46,13 +46,13 @@ function ratesForTotal(totalCents: number): AllocationRates {
   if (totalCents > BIG_DEAL_THRESHOLD_CENTS) {
     return {
       taxRate: 0.35,
-      opsRate: 0.15,
+      ownerRate: 0.5,
     };
   }
 
   return {
     taxRate: 0.25,
-    opsRate: 0.25,
+    ownerRate: 0.5,
   };
 }
 
@@ -61,11 +61,11 @@ export function allocateRevenue(
   now: Date = new Date(),
 ): RevenueAllocationResult {
   const totalCents = parseCurrencyCents(input.total_value);
-  const { taxRate, opsRate } = ratesForTotal(totalCents);
+  const { taxRate, ownerRate } = ratesForTotal(totalCents);
 
   const taxReserveCents = Math.round(totalCents * taxRate);
-  const opsFundCents = Math.round(totalCents * opsRate);
-  const ownerSweepCents = totalCents - taxReserveCents - opsFundCents;
+  const ownerSweepCents = Math.round(totalCents * ownerRate);
+  const opsFundCents = totalCents - taxReserveCents - ownerSweepCents;
 
   return {
     tax_reserve: centsToDollars(taxReserveCents),
