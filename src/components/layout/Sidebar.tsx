@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, MessageSquare, Trash2, Image, Video, ChevronLeft, ChevronRight, Sparkles, BookOpen, Download, Smile, Crown, LogIn, LogOut, User, Brain, Volume2, VolumeX, Settings, X, Coins } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Image, Video, ChevronLeft, ChevronRight, Sparkles, BookOpen, Download, Smile, Crown, LogIn, LogOut, User, Brain, Volume2, VolumeX, Settings, X, Coins, Wand2 } from 'lucide-react';
 import { getAutoSpeak, toggleAutoSpeak } from '@/hooks/useAutoSpeak';
 import ProjectBrain from '@/components/features/ProjectBrain';
 import { Conversation, ChatMode } from '@/types/chat';
@@ -20,6 +20,7 @@ interface SidebarProps {
   onOpenLibrary: () => void;
   onOpenPersonality: () => void;
   onOpenPricing: () => void;
+  onOpenSkillCreator: () => void;
   currentPersonality: PersonalityPreset;
   onMobileClose?: () => void;
 }
@@ -80,6 +81,7 @@ export default function Sidebar({
   onOpenLibrary,
   onOpenPersonality,
   onOpenPricing,
+  onOpenSkillCreator,
   currentPersonality,
   onMobileClose,
 }: SidebarProps) {
@@ -353,6 +355,18 @@ export default function Sidebar({
           >
             <Brain className="w-3.5 h-3.5 shrink-0" />
             {!collapsed && <span>Project Brain</span>}
+          </button>
+
+          {/* Skill Creator */}
+          <button
+            onClick={onOpenSkillCreator}
+            className={cn(
+              'flex items-center gap-2 rounded-lg transition-all duration-200 text-xs font-medium w-full border border-border text-muted-foreground hover:border-[hsl(265_80%_65%_/_0.5)] hover:text-[hsl(265_80%_65%)] hover:bg-[hsl(265_80%_65%_/_0.06)]',
+              collapsed ? 'justify-center p-2' : 'px-3 py-2'
+            )}
+          >
+            <Wand2 className="w-3.5 h-3.5 shrink-0" />
+            {!collapsed && <span>Skill Creator</span>}
           </button>
 
           {/* Auto-Speak Toggle */}

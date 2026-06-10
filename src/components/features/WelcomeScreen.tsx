@@ -16,6 +16,7 @@ import {
   Sparkles,
   Video,
   Wallet,
+  Wand2,
   Zap,
 } from 'lucide-react';
 import logoImg from '@/assets/mockj-logo.png';
@@ -28,6 +29,7 @@ interface WelcomeScreenProps {
   onOpenVideoStudio?: () => void;
   onOpenProjectBrain?: () => void;
   onOpenPromptLibrary?: () => void;
+  onOpenSkillCreator?: () => void;
   onOpenPricing?: () => void;
   onOpenAccount?: () => void;
   onOpenWallet?: () => void;
@@ -47,6 +49,7 @@ type ModuleAction =
   | 'wallet'
   | 'billing'
   | 'library'
+  | 'skills'
   | 'gallery';
 
 const RED = 'hsl(4 90% 58%)';
@@ -135,6 +138,13 @@ const COMMAND_MODULES: {
     color: BLUE,
   },
   {
+    icon: Wand2,
+    label: 'Skill Creator',
+    desc: 'Build reusable MockJ capabilities and export a ready-to-use SKILL.md.',
+    action: 'skills',
+    color: RED,
+  },
+  {
     icon: Images,
     label: 'Saved Creations Gallery',
     desc: 'A living archive of generated images, edits, downloads, and remixes.',
@@ -163,6 +173,7 @@ export default function WelcomeScreen({
   onOpenVideoStudio,
   onOpenProjectBrain,
   onOpenPromptLibrary,
+  onOpenSkillCreator,
   onOpenPricing,
   onOpenAccount,
   onOpenWallet,
@@ -185,6 +196,10 @@ export default function WelcomeScreen({
     }
     if (action === 'library') {
       onOpenPromptLibrary?.();
+      return;
+    }
+    if (action === 'skills') {
+      onOpenSkillCreator?.();
       return;
     }
     if (action === 'billing') {

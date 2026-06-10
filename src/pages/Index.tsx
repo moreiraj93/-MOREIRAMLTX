@@ -6,6 +6,7 @@ import ChatWindow from '@/components/features/ChatWindow';
 import ImageGeneratorPanel from '@/components/features/ImageGeneratorPanel';
 import VideoGeneratorPanel from '@/components/features/VideoGeneratorPanel';
 import PromptLibrary from '@/components/features/PromptLibrary';
+import SkillCreator from '@/components/features/SkillCreator';
 import ProjectBrain from '@/components/features/ProjectBrain';
 import PersonalityPicker, { PersonalityPreset, loadPersonality, savePersonality } from '@/components/features/PersonalityPicker';
 import PricingModal from '@/components/features/PricingModal';
@@ -46,6 +47,7 @@ export default function Index() {
   const [tabMode, setTabMode] = useState<TabMode>('chat');
   const [imageStudioView, setImageStudioView] = useState<ImageStudioView>('generate');
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showSkillCreator, setShowSkillCreator] = useState(false);
   const [showBrain, setShowBrain] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [deepReasoning, setDeepReasoning] = useState(false);
@@ -329,6 +331,7 @@ export default function Index() {
           onNew={(mode) => { handleNew(mode); setMobileSidebarOpen(false); }}
           onDelete={handleDelete}
           onOpenLibrary={() => { setShowLibrary(true); setMobileSidebarOpen(false); }}
+          onOpenSkillCreator={() => { setShowSkillCreator(true); setMobileSidebarOpen(false); }}
           onOpenPersonality={() => { setShowPersonality(true); setMobileSidebarOpen(false); }}
           onOpenPricing={() => { setShowPricing(true); setMobileSidebarOpen(false); }}
           currentPersonality={personality}
@@ -403,6 +406,7 @@ export default function Index() {
               onOpenVideoStudio={() => setTabMode('video-studio')}
               onOpenProjectBrain={() => setShowBrain(true)}
               onOpenPromptLibrary={() => setShowLibrary(true)}
+              onOpenSkillCreator={() => setShowSkillCreator(true)}
               onOpenPricing={() => setShowPricing(true)}
               onOpenAccount={() => navigate(user ? '/account' : '/auth')}
               onOpenWallet={() => navigate('/tokens')}
@@ -420,6 +424,17 @@ export default function Index() {
         <PromptLibrary
           onSelect={handleLibrarySelect}
           onClose={() => setShowLibrary(false)}
+        />
+      )}
+
+      {showSkillCreator && (
+        <SkillCreator
+          onClose={() => setShowSkillCreator(false)}
+          onSendToChat={(prompt) => {
+            setTabMode('chat');
+            setChatMode('chat');
+            setPendingPrompt(prompt);
+          }}
         />
       )}
 

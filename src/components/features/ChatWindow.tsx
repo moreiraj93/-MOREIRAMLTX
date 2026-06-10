@@ -20,6 +20,7 @@ interface ChatWindowProps {
   onOpenVideoStudio?: () => void;
   onOpenProjectBrain?: () => void;
   onOpenPromptLibrary?: () => void;
+  onOpenSkillCreator?: () => void;
   onOpenPricing?: () => void;
   onOpenAccount?: () => void;
   onOpenWallet?: () => void;
@@ -42,6 +43,7 @@ export default function ChatWindow({
   onOpenVideoStudio,
   onOpenProjectBrain,
   onOpenPromptLibrary,
+  onOpenSkillCreator,
   onOpenPricing,
   onOpenAccount,
   onOpenWallet,
@@ -66,6 +68,7 @@ export default function ChatWindow({
             onOpenVideoStudio={onOpenVideoStudio}
             onOpenProjectBrain={onOpenProjectBrain}
             onOpenPromptLibrary={onOpenPromptLibrary}
+            onOpenSkillCreator={onOpenSkillCreator}
             onOpenPricing={onOpenPricing}
             onOpenAccount={onOpenAccount}
             onOpenWallet={onOpenWallet}
