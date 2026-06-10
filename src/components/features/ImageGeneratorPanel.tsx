@@ -16,7 +16,7 @@ import { useTokenWallet } from '@/hooks/useTokenWallet';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-type PanelMode = 'generate' | 'edit' | 'history';
+type PanelMode = 'generate' | 'edit' | 'history' | 'photo';
 
 interface ImageGeneratorPanelProps {
   initialMode?: PanelMode;
@@ -97,6 +97,13 @@ const EDIT_PROMPTS = [
   'Make it look like a hand-painted watercolor artwork',
   'Add glowing neon accents and cyberpunk atmosphere',
   'Change to nighttime with glowing city lights reflected',
+];
+
+const PHOTO_PROMPTS = [
+  'Enhance this photo with natural skin tones and clean studio lighting',
+  'Restore detail, improve sharpness, and balance the color grade',
+  'Create a polished editorial portrait while keeping the person recognizable',
+  'Remove harsh shadows and make this look like a premium product photo',
 ];
 
 const LOADING_MESSAGES = [
@@ -259,6 +266,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
   const voiceGenerate = useVoiceInput(t => setPrompt(p => p ? `${p} ${t}` : t));
   const voiceEdit     = useVoiceInput(t => setEditPrompt(p => p ? `${p} ${t}` : t));
   const voice = panelMode === 'generate' ? voiceGenerate : voiceEdit;
+  const referenceMode = panelMode === 'edit' || panelMode === 'photo';
 
   useEffect(() => {
     setPanelMode(initialMode);
@@ -288,7 +296,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault(); setDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) { loadFile(file); if (panelMode === 'generate') setPanelMode('edit'); }
+    if (file) { loadFile(file); if (panelMode === 'generate' || panelMode === 'history') setPanelMode('photo'); }
   };
 
   const clearSource = () => {
@@ -297,9 +305,9 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
   };
 
   const handleGenerate = async (overridePrompt?: string, overrideStyle?: ImageGenRequest['style'], overrideRatio?: ImageGenRequest['aspectRatio'], overrideQuality?: string) => {
-    const activePrompt = overridePrompt ?? (panelMode === 'generate' ? prompt : editPrompt).trim();
+    const activePrompt = (overridePrompt ?? (panelMode === 'generate' ? prompt : editPrompt)).trim();
     if (!activePrompt || loading) return;
-    if (panelMode === 'edit' && !sourceImage && !overridePrompt) return;
+    if (referenceMode && !sourceImage) return;
 
     const useStyle   = overrideStyle   ?? style;
     const useRatio   = overrideRatio   ?? ratio;
@@ -332,7 +340,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
     setLoading(true); setResult(null); setError(null);
     setResultPrompt(activePrompt); setLoadingMsgIdx(0);
 
-    const msgs = panelMode === 'edit' ? EDIT_LOADING_MESSAGES : LOADING_MESSAGES;
+    const msgs = referenceMode ? EDIT_LOADING_MESSAGES : LOADING_MESSAGES;
     const iv = setInterval(() => setLoadingMsgIdx(i => (i + 1) % msgs.length), 2500);
 
     const enhancedPrompt = applyAdultEditorialGuardrails(applyMoreiraJStyleCode(activePrompt));
@@ -344,7 +352,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
         aspectRatio: useRatio,
         quality: useQuality,
         modelVersion,
-        sourceImageDataUrl: panelMode === 'edit' ? (sourceImage ?? undefined) : undefined,
+        sourceImageDataUrl: referenceMode ? (sourceImage ?? undefined) : undefined,
         charConsistency,
         facePreservation,
         addWatermark,
@@ -359,7 +367,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
           style: useStyle,
           aspectRatio: useRatio,
           quality: useQuality,
-          mode: (panelMode === 'history' ? 'generate' : panelMode) as 'generate' | 'edit',
+          mode: referenceMode ? 'edit' : 'generate',
           imageUrl: url,
         });
       }
@@ -382,12 +390,79 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
     a.href = href; a.download = `mockj-studio-${Date.now()}.png`; a.target = '_blank'; a.click();
   };
 
+  const switchMode = (mode: PanelMode) => {
+    setPanelMode(mode);
+    setResult(null);
+    setError(null);
+    if (mode === 'photo') {
+      setEditPrompt(p => p || PHOTO_PROMPTS[0]);
+    }
+  };
+
+  const openReferencePicker = (mode: 'edit' | 'photo' = 'edit') => {
+    switchMode(mode);
+    window.setTimeout(() => fileInputRef.current?.click(), 0);
+  };
+
+  const handleFeatureClick = (label: string) => {
+    switch (label) {
+      case 'Voice Commands':
+        if (panelMode === 'history') {
+          switchMode('generate');
+          voiceGenerate.start();
+          return;
+        }
+        voice.listening ? voice.stop() : voice.start();
+        break;
+      case 'Reference Images':
+        openReferencePicker('edit');
+        break;
+      case 'Image-to-Image':
+        openReferencePicker('photo');
+        break;
+      case 'Character Consistency':
+        setCharConsistency(v => !v);
+        setShowAdvanced(true);
+        toast.success('Character consistency toggled.');
+        break;
+      case 'Face Preservation':
+        setFacePreservation(v => !v);
+        setShowAdvanced(true);
+        if (panelMode === 'generate') switchMode('photo');
+        toast.success('Face preservation toggled.');
+        break;
+      case 'Pose Reference':
+        setEditPrompt('Match the pose and composition from the reference image while keeping the subject natural.');
+        openReferencePicker('edit');
+        break;
+      case 'Style Transfer':
+        setEditPrompt('Apply this image style to a polished MockJ creator image.');
+        openReferencePicker('edit');
+        break;
+      case 'Private Workspace':
+        setPrivateMode(v => !v);
+        setShowAdvanced(true);
+        toast.success('Private workspace toggled.');
+        break;
+      case 'Watermark Control':
+        setAddWatermark(v => !v);
+        setShowAdvanced(true);
+        toast.success('Watermark control toggled.');
+        break;
+      case 'Commercial License':
+        toast.success('Commercial license is included for generated images.');
+        break;
+      default:
+        break;
+    }
+  };
+
   const aspectVisual = RATIOS.find(r => r.value === ratio);
   const selectedModel = IMAGE_MODEL_VERSIONS.find(m => m.value === modelVersion) ?? IMAGE_MODEL_VERSIONS[0];
-  const msgs = panelMode === 'edit' ? EDIT_LOADING_MESSAGES : LOADING_MESSAGES;
+  const msgs = referenceMode ? EDIT_LOADING_MESSAGES : LOADING_MESSAGES;
   const canSubmit = panelMode === 'generate'
     ? !!prompt.trim() && !loading
-    : panelMode === 'edit'
+    : referenceMode
     ? !!editPrompt.trim() && !!sourceImage && !loading
     : false;
 
@@ -418,10 +493,10 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
 
           {/* Mode Toggle */}
           <div className="flex rounded-xl border border-border overflow-hidden p-1 bg-[hsl(224_15%_9%)] gap-1">
-            {(['generate', 'edit', 'history'] as PanelMode[]).map(m => (
+            {(['generate', 'edit', 'history', 'photo'] as PanelMode[]).map(m => (
               <button
                 key={m}
-                onClick={() => { setPanelMode(m); setResult(null); setError(null); }}
+                onClick={() => switchMode(m)}
                 className={cn(
                   'flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-medium transition-all duration-200',
                   panelMode === m
@@ -431,7 +506,8 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
               >
                 {m === 'generate' ? <><Sparkles className="w-3 h-3" /> Generate</>
                   : m === 'edit'  ? <><Wand2    className="w-3 h-3" /> Edit</>
-                  :                  <><History  className="w-3 h-3" /> History</>}
+                  : m === 'history' ? <><History  className="w-3 h-3" /> History</>
+                  :                  <><Image className="w-3 h-3" /> Photo</>}
               </button>
             ))}
           </div>
@@ -537,11 +613,13 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
             </div>
           )}
 
-          {/* EDIT MODE */}
-          {panelMode === 'edit' && (
+          {/* EDIT / PHOTO MODE */}
+          {referenceMode && (
             <>
               <div className="space-y-2">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Reference Image</label>
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                  {panelMode === 'photo' ? 'Photo Source' : 'Reference Image'}
+                </label>
                 {!sourceImage ? (
                   <button onClick={() => fileInputRef.current?.click()}
                     className={cn(
@@ -554,7 +632,9 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
                       <Upload className="w-4 h-4 text-[hsl(265_80%_65%_/_0.6)]" />
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">Click or drag &amp; drop image</p>
+                      <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                        {panelMode === 'photo' ? 'Click or drag a photo' : 'Click or drag & drop image'}
+                      </p>
                       <p className="text-[10px] text-muted-foreground/50 mt-0.5">PNG, JPG, WebP · Max 8MB</p>
                     </div>
                   </button>
@@ -578,10 +658,14 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
                   onChange={handleFileChange} className="hidden" />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Creative Direction</label>
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                  {panelMode === 'photo' ? 'Photo Direction' : 'Creative Direction'}
+                </label>
                 <div className="relative">
                   <textarea value={editPrompt} onChange={e => setEditPrompt(e.target.value)}
-                    placeholder="Transform this into a cyberpunk scene with neon lighting…"
+                    placeholder={panelMode === 'photo'
+                      ? 'Enhance this photo with natural detail, clean lighting, and premium polish…'
+                      : 'Transform this into a cyberpunk scene with neon lighting…'}
                     rows={3}
                     className="w-full bg-[hsl(224_15%_9%)] border border-border rounded-xl px-3.5 py-3 pr-10 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none resize-none focus:border-[hsl(265_80%_65%_/_0.5)] transition-all duration-200 leading-relaxed"
                   />
@@ -597,7 +681,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
                   </button>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  {EDIT_PROMPTS.map(idea => (
+                  {(panelMode === 'photo' ? PHOTO_PROMPTS : EDIT_PROMPTS).map(idea => (
                     <button key={idea} onClick={() => setEditPrompt(idea)}
                       className="text-[10px] px-2.5 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-[hsl(265_80%_65%_/_0.35)] hover:bg-[hsl(265_80%_65%_/_0.04)] transition-all text-left">
                       {idea}
@@ -808,14 +892,18 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
               style={canSubmit ? { background: 'linear-gradient(135deg, hsl(4 90% 58%), hsl(265 80% 65%))' } : undefined}
             >
               {loading
-                ? <><RefreshCw className="w-4 h-4 animate-spin" /> {panelMode === 'edit' ? 'Transforming…' : 'Creating…'}</>
+                ? <><RefreshCw className="w-4 h-4 animate-spin" /> {referenceMode ? 'Transforming…' : 'Creating…'}</>
                 : panelMode === 'edit'
                 ? <><Wand2 className="w-4 h-4" /> Transform Image</>
+                : panelMode === 'photo'
+                ? <><Image className="w-4 h-4" /> Enhance Photo</>
                 : <><Sparkles className="w-4 h-4" /> Generate Image</>
               }
             </button>
-            {panelMode === 'edit' && !sourceImage && (
-              <p className="text-[10px] text-muted-foreground/50 text-center mt-2">Upload or drag a reference image to enable</p>
+            {referenceMode && !sourceImage && (
+              <p className="text-[10px] text-muted-foreground/50 text-center mt-2">
+                Upload or drag a {panelMode === 'photo' ? 'photo' : 'reference image'} to enable
+              </p>
             )}
           </div>
         )}
@@ -896,7 +984,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
             {dragging && (
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[hsl(265_80%_65%_/_0.12)] border-2 border-dashed border-[hsl(265_80%_65%)] rounded-2xl m-4 pointer-events-none">
                 <Upload className="w-10 h-10 text-[hsl(265_80%_65%)] mb-3" />
-                <p className="text-sm font-bold text-[hsl(265_80%_65%)]">Drop image to edit</p>
+                <p className="text-sm font-bold text-[hsl(265_80%_65%)]">Drop image to use as a reference</p>
               </div>
             )}
 
@@ -906,7 +994,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
                 <div className="mb-6">
                   <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
                     style={{ background: 'hsl(4 90% 58% / 0.1)', border: '1px solid hsl(4 90% 58% / 0.3)', boxShadow: '0 0 30px hsl(4 90% 58% / 0.15)' }}>
-                    {panelMode === 'edit'
+                    {referenceMode
                       ? <Wand2 className="w-7 h-7" style={{ color: 'hsl(4 90% 58%)' }} />
                       : <Image className="w-7 h-7" style={{ color: 'hsl(4 90% 58%)' }} />}
                   </div>
@@ -914,17 +1002,28 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
                     MOCKJ <span style={{ color: 'hsl(4 90% 58%)', textShadow: '0 0 20px hsl(4 90% 58% / 0.5)' }}>AI STUDIO</span>
                   </h3>
                   <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'hsl(265 80% 65%)' }}>
-                    {panelMode === 'edit' ? 'Transform. Reimagine. Create.' : 'Generate. Edit. Control.'}
+                    {panelMode === 'photo'
+                      ? 'Enhance. Restore. Polish.'
+                      : panelMode === 'edit'
+                      ? 'Transform. Reimagine. Create.'
+                      : 'Generate. Edit. Control.'}
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                    {panelMode === 'edit'
+                    {panelMode === 'photo'
+                      ? 'Upload a photo, choose enhancement direction, and run MockJ photo polish with creator controls.'
+                      : panelMode === 'edit'
                       ? 'Upload any image as a reference — transform it with voice commands, style transfer, and advanced creator tools.'
                       : 'Describe your vision with text or voice. Choose style, ratio, and quality — MockJ AI brings it to life.'}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-6">
                   {CREATOR_FEATURES.map(f => (
-                    <div key={f.label} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border bg-[hsl(224_15%_8%)] hover:border-[hsl(265_80%_65%_/_0.3)] transition-all">
+                    <button
+                      key={f.label}
+                      type="button"
+                      onClick={() => handleFeatureClick(f.label)}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border bg-[hsl(224_15%_8%)] hover:border-[hsl(265_80%_65%_/_0.3)] transition-all text-left focus:outline-none focus:ring-2 focus:ring-[hsl(265_80%_65%_/_0.35)]"
+                    >
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                         style={{
                           backgroundColor: f.color.replace(')', ' / 0.12)').replace('hsl(', 'hsl('),
@@ -936,7 +1035,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
                         <p className="text-[11px] font-semibold text-foreground truncate">{f.label}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{f.desc}</p>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
                 {panelMode === 'generate' && aspectVisual && (
@@ -974,7 +1073,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
             {/* Result */}
             {result && !loading && (
               <div className="w-full max-w-lg animate-message-in space-y-4">
-                {panelMode === 'edit' && sourceImage ? (
+                {referenceMode && sourceImage ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest text-center">Original</p>
@@ -1011,7 +1110,7 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
                     <p className="text-xs text-muted-foreground truncate">"{resultPrompt}"</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <p className="text-[10px] text-muted-foreground/50">
-                        {selectedModel.label} · {STYLES.find(s => s.value === style)?.label} · {panelMode === 'generate' ? ratio : 'Reference Edit'} · {QUALITY_OPTIONS.find(q => q.value === quality)?.label}
+                        {selectedModel.label} · {STYLES.find(s => s.value === style)?.label} · {panelMode === 'generate' ? ratio : panelMode === 'photo' ? 'Photo Enhance' : 'Reference Edit'} · {QUALITY_OPTIONS.find(q => q.value === quality)?.label}
                       </p>
                       {privateMode && <span className="flex items-center gap-1 text-[10px] text-[hsl(200_80%_60%)]"><Lock className="w-2.5 h-2.5" />Private</span>}
                       <span className="flex items-center gap-1 text-[10px] text-[hsl(38_95%_60%)]"><Award className="w-2.5 h-2.5" />Commercial</span>
