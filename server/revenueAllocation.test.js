@@ -39,7 +39,7 @@ describe('calculateRevenueAllocation', () => {
       'HOLD_IN_BUSINESS_ACCOUNT',
     );
     assert.equal(
-      calculateRevenueAllocation(20_02).status,
+      calculateRevenueAllocation(20_04).status,
       'READY_FOR_RTP',
     );
   });
@@ -101,7 +101,7 @@ describe('allocationSourceFromStripeEvent', () => {
       stripePriceId: 'price_123',
       currency: 'usd',
       totalAmountCents: 50_99,
-      stripeCreatedAt: '2026-05-26T17:46:40.000Z',
+      stripeCreatedAt: '2026-05-28T20:26:40.000Z',
     });
   });
 
@@ -164,7 +164,7 @@ describe('allocationRecordFromStripeEvent', () => {
       owner_rate: 0.5,
       allocation_tier: 'standard',
       status: 'HOLD_IN_BUSINESS_ACCOUNT',
-      stripe_created_at: '2026-05-26T17:46:40.000Z',
+      stripe_created_at: '2026-05-28T20:26:40.000Z',
       raw_event: event,
     });
   });
