@@ -2,6 +2,7 @@ import { useState, useRef, KeyboardEvent, useEffect, useCallback } from 'react';
 import { Send, Image, Video, MessageSquare, Mic, MicOff, BrainCircuit } from 'lucide-react';
 import { ChatMode } from '@/types/chat';
 import { cn } from '@/lib/utils';
+import { AUTO_SPEAK_EVENT_NAME, getAutoSpeak } from '@/hooks/useAutoSpeak';
 
 interface ChatInputProps {
   mode: ChatMode;
@@ -56,22 +57,61 @@ interface SpeechRecognition extends EventTarget {
 
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
+  resultIndex: number;
 }
 
 interface SpeechRecognitionErrorEvent extends Event {
   error: string;
 }
 
+const WAKE_COMMAND_REGEX = /\b(?:hey|hi|yo|ok|okay)\s+mock\s*j\b[\s,.:;!-]*(.*)$/i;
+
+function parseWakeCommand(transcript: string): string | null {
+  const normalized = transcript.replace(/\s+/g, ' ').trim();
+  const match = normalized.match(WAKE_COMMAND_REGEX);
+  return match ? match[1].trim() : null;
+}
+
+function speakWakeAck() {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance("I'm listening.");
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
 export default function ChatInput({ mode, onModeChange, onSend, disabled, pendingPrompt, onPendingPromptConsumed, deepReasoning = false, onDeepReasoningChange }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [autoSpeakEnabled, setAutoSpeakEnabled] = useState(() => getAutoSpeak());
+  const [wakeListening, setWakeListening] = useState(false);
+  const [wakeStatus, setWakeStatus] = useState<'idle' | 'heard' | 'blocked'>('idle');
   const [hasVoiceSupport] = useState(
     () => !!(window.SpeechRecognition || window.webkitSpeechRecognition)
   );
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const wakeRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const wakeShouldListenRef = useRef(false);
+  const awaitingWakeCommandRef = useRef(false);
+  const onSendRef = useRef(onSend);
+  const disabledRef = useRef(disabled);
+  const isRecordingRef = useRef(isRecording);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const config = MODE_CONFIG[mode];
+
+  useEffect(() => {
+    onSendRef.current = onSend;
+  }, [onSend]);
+
+  useEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
+
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
 
   // Auto-resize textarea helper
   const autoResize = useCallback(() => {
@@ -121,6 +161,142 @@ export default function ChatInput({ mode, onModeChange, onSend, disabled, pendin
     setIsRecording(true);
   }, [isRecording, hasVoiceSupport, autoResize]);
 
+  const submitWakeCommand = useCallback((rawCommand: string) => {
+    const command = rawCommand.trim();
+    if (!command || disabledRef.current) return;
+    setValue('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+    onSendRef.current(command);
+  }, []);
+
+  const stopWakeRecognition = useCallback(() => {
+    wakeShouldListenRef.current = false;
+    awaitingWakeCommandRef.current = false;
+    setWakeListening(false);
+    setWakeStatus('idle');
+    try {
+      wakeRecognitionRef.current?.stop();
+    } catch {
+      // Recognition may already be stopped.
+    }
+    wakeRecognitionRef.current = null;
+  }, []);
+
+  const startWakeRecognition = useCallback(() => {
+    if (!hasVoiceSupport || !getAutoSpeak() || disabledRef.current || isRecordingRef.current) {
+      return;
+    }
+
+    wakeShouldListenRef.current = true;
+
+    if (wakeRecognitionRef.current) {
+      return;
+    }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.continuous = true;
+    wakeRecognitionRef.current = recognition;
+
+    recognition.onresult = (e: SpeechRecognitionEvent) => {
+      for (let i = e.resultIndex; i < e.results.length; i += 1) {
+        const result = e.results[i];
+        if (!result.isFinal) continue;
+
+        const transcript = result[0].transcript.trim();
+        if (!transcript) continue;
+
+        if (awaitingWakeCommandRef.current) {
+          awaitingWakeCommandRef.current = false;
+          setWakeStatus('idle');
+          submitWakeCommand(transcript);
+          continue;
+        }
+
+        const command = parseWakeCommand(transcript);
+        if (command === null) continue;
+
+        if (command) {
+          setWakeStatus('idle');
+          submitWakeCommand(command);
+        } else {
+          awaitingWakeCommandRef.current = true;
+          setWakeStatus('heard');
+          speakWakeAck();
+        }
+      }
+    };
+
+    recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        wakeShouldListenRef.current = false;
+        setWakeStatus('blocked');
+      }
+      setWakeListening(false);
+      wakeRecognitionRef.current = null;
+    };
+
+    recognition.onend = () => {
+      wakeRecognitionRef.current = null;
+      setWakeListening(false);
+      if (wakeShouldListenRef.current && getAutoSpeak() && !disabledRef.current && !isRecordingRef.current) {
+        window.setTimeout(startWakeRecognition, 350);
+      }
+    };
+
+    try {
+      recognition.start();
+      setWakeListening(true);
+      setWakeStatus('idle');
+    } catch {
+      wakeRecognitionRef.current = null;
+      setWakeListening(false);
+    }
+  }, [hasVoiceSupport, submitWakeCommand]);
+
+  useEffect(() => {
+    const syncAutoSpeak = (enabled: boolean) => {
+      setAutoSpeakEnabled(enabled);
+      if (enabled) {
+        wakeShouldListenRef.current = true;
+        startWakeRecognition();
+      } else {
+        stopWakeRecognition();
+      }
+    };
+
+    syncAutoSpeak(getAutoSpeak());
+
+    const handler = (e: Event) => {
+      syncAutoSpeak((e as CustomEvent<{ enabled: boolean }>).detail.enabled);
+    };
+
+    window.addEventListener(AUTO_SPEAK_EVENT_NAME, handler);
+    return () => {
+      window.removeEventListener(AUTO_SPEAK_EVENT_NAME, handler);
+      stopWakeRecognition();
+    };
+  }, [startWakeRecognition, stopWakeRecognition]);
+
+  useEffect(() => {
+    if (autoSpeakEnabled && !disabled && !isRecording) {
+      wakeShouldListenRef.current = true;
+      startWakeRecognition();
+    }
+
+    if (disabled || isRecording) {
+      try {
+        wakeRecognitionRef.current?.stop();
+      } catch {
+        // Recognition may already be stopped.
+      }
+    }
+  }, [autoSpeakEnabled, disabled, isRecording, startWakeRecognition]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => recognitionRef.current?.stop();
@@ -140,7 +316,7 @@ export default function ChatInput({ mode, onModeChange, onSend, disabled, pendin
         }
       }, 50);
     }
-  }, [pendingPrompt]);
+  }, [pendingPrompt, onPendingPromptConsumed]);
 
   const handleSend = () => {
     const trimmed = value.trim();
@@ -277,7 +453,15 @@ export default function ChatInput({ mode, onModeChange, onSend, disabled, pendin
       </div>
 
       <p className="text-[10px] text-muted-foreground/40 text-center mt-2">
-        MockJ keeps it real, but double-check anything critical ngl 🤙
+        {autoSpeakEnabled && hasVoiceSupport
+          ? wakeStatus === 'blocked'
+            ? 'Microphone access is blocked. Allow mic access to use Hey MockJ.'
+            : wakeStatus === 'heard'
+            ? 'MockJ heard you. Say your command.'
+            : wakeListening
+            ? 'Auto-Speak is listening. Say "Hey MockJ" plus your command.'
+            : 'Auto-Speak is on. Say "Hey MockJ" to start.'
+          : 'MockJ keeps it real, but double-check anything critical ngl 🤙'}
       </p>
     </div>
   );

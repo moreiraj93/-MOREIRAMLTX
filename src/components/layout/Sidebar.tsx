@@ -102,6 +102,7 @@ export default function Sidebar({
   const handleAutoSpeakToggle = () => {
     const next = toggleAutoSpeak();
     setAutoSpeak(next);
+    toast.success(next ? 'Auto-Speak on. Say "Hey MockJ" to talk hands-free.' : 'Auto-Speak off.');
   };
 
   return (
@@ -364,7 +365,7 @@ export default function Sidebar({
                 ? 'bg-[hsl(4_90%_58%_/_0.1)] border-[hsl(4_90%_58%_/_0.45)] text-[hsl(4_90%_58%)]'
                 : 'border-border text-muted-foreground hover:border-[hsl(4_90%_58%_/_0.4)] hover:text-[hsl(4_90%_58%)] hover:bg-[hsl(4_90%_58%_/_0.05)]'
             )}
-            title={autoSpeak ? 'Auto-Speak is ON — click to disable' : 'Auto-Speak is OFF — click to enable'}
+            title={autoSpeak ? 'Auto-Speak is ON — say "Hey MockJ" to start talking' : 'Auto-Speak is OFF — click to enable wake word listening'}
           >
             {autoSpeak
               ? <Volume2 className="w-3.5 h-3.5 shrink-0" />

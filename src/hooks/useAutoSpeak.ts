@@ -5,7 +5,7 @@
  */
 
 const STORAGE_KEY = 'mockj_auto_speak';
-const EVENT_NAME = 'mockj:autospeak-change';
+export const AUTO_SPEAK_EVENT_NAME = 'mockj:autospeak-change';
 
 export function getAutoSpeak(): boolean {
   try {
@@ -19,7 +19,7 @@ export function setAutoSpeak(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, String(enabled));
   } catch { /* ignore */ }
-  window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: { enabled } }));
+  window.dispatchEvent(new CustomEvent(AUTO_SPEAK_EVENT_NAME, { detail: { enabled } }));
 }
 
 export function toggleAutoSpeak(): boolean {
