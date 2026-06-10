@@ -18,6 +18,11 @@ function mapUser(user: User): AuthUser {
   };
 }
 
+function safeRedirectPath(path?: string | null) {
+  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/';
+  return path;
+}
+
 export function useAuthActions() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -73,7 +78,8 @@ export function useAuthActions() {
     email: string,
     token: string,
     password: string,
-    username?: string
+    username?: string,
+    redirectPath?: string | null
   ) => {
     setLoading(true);
     try {
@@ -93,14 +99,14 @@ export function useAuthActions() {
 
       login(mapUser(updateData.user));
       toast.success('Account created! Welcome to MockJ 🔥');
-      navigate('/');
+      navigate(safeRedirectPath(redirectPath));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Verification failed');
       setLoading(false);
     }
   };
 
-  const signInWithPassword = async (email: string, password: string) => {
+  const signInWithPassword = async (email: string, password: string, redirectPath?: string | null) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -109,17 +115,17 @@ export function useAuthActions() {
 
       login(mapUser(data.user));
       toast.success('Welcome back 🔥');
-      navigate('/');
+      navigate(safeRedirectPath(redirectPath));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Login failed');
       setLoading(false);
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (redirectPath?: string | null) => {
     setLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/auth`;
+      const redirectTo = `${window.location.origin}/auth?redirect=${encodeURIComponent(safeRedirectPath(redirectPath))}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

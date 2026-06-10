@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   CheckCircle2,
   Clock,
   Coins,
+  Copy,
   Gift,
   History,
   Image as ImageIcon,
@@ -19,7 +20,13 @@ import {
   Zap,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { TOKEN_COST_CATALOG, TokenCatalogId, TokenCatalogItem, useTokenWallet } from '@/hooks/useTokenWallet';
+import {
+  consumePendingReferralCode,
+  TOKEN_COST_CATALOG,
+  TokenCatalogId,
+  TokenCatalogItem,
+  useTokenWallet,
+} from '@/hooks/useTokenWallet';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -49,15 +56,24 @@ const CATEGORY_TONE: Record<TokenCatalogItem['category'], string> = {
 
 export default function TokensPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, loading } = useAuth();
   const {
     tokenBalance,
     starterBalance,
     canSpendCatalogItem,
     spendCatalogItem,
+    referralStats,
+    referralBonus,
+    applyReferralCode,
   } = useTokenWallet();
-  const [activeTab, setActiveTab] = useState<TokenTab>('overview');
+  const requestedTab = searchParams.get('tab') as TokenTab | null;
+  const [activeTab, setActiveTab] = useState<TokenTab>(
+    TABS.some(tab => tab.id === requestedTab) ? requestedTab : 'overview'
+  );
   const [selectedId, setSelectedId] = useState<TokenCatalogId>('chat-basic');
+  const [referralInput, setReferralInput] = useState('');
+  const [copiedReferral, setCopiedReferral] = useState(false);
 
   const selected = useMemo(
     () => TOKEN_COST_CATALOG.find(item => item.id === selectedId) ?? TOKEN_COST_CATALOG[0],
@@ -68,6 +84,26 @@ export default function TokensPage() {
     toast.message('Create a free MockJ account to unlock and spend MLTX tokens.');
     navigate('/auth?mode=signup');
   };
+
+  useEffect(() => {
+    if (TABS.some(tab => tab.id === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
+
+  useEffect(() => {
+    if (!user) return;
+    const pendingReferralCode = consumePendingReferralCode();
+    if (!pendingReferralCode) return;
+
+    setActiveTab('referral');
+    const result = applyReferralCode(pendingReferralCode);
+    if (result.ok) {
+      toast.success(result.message);
+    } else {
+      toast.message(result.message);
+    }
+  }, [applyReferralCode, user]);
 
   const handleCostClick = (item: TokenCatalogItem) => {
     setSelectedId(item.id);
@@ -91,6 +127,49 @@ export default function TokensPage() {
 
     if (spendCatalogItem(selected.id)) {
       toast.success(`${selected.cost} MLTX tokens used for ${selected.shortLabel}.`);
+    }
+  };
+
+  const handleCopyReferral = async () => {
+    if (!user || !referralStats) {
+      requireAccount();
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(referralStats.link);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = referralStats.link;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setCopiedReferral(true);
+      toast.success('Referral link copied.');
+      window.setTimeout(() => setCopiedReferral(false), 1800);
+    } catch {
+      toast.error('Copy failed. Select the link and copy it manually.');
+    }
+  };
+
+  const handleApplyReferral = (event: FormEvent) => {
+    event.preventDefault();
+    if (!user) {
+      requireAccount();
+      return;
+    }
+
+    const result = applyReferralCode(referralInput);
+    if (result.ok) {
+      setReferralInput('');
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
     }
   };
 
@@ -214,7 +293,108 @@ export default function TokensPage() {
           </div>
         </section>
 
-        {activeTab !== 'overview' && (
+        {activeTab === 'referral' && (
+          <section className="space-y-4">
+            <div className="rounded-2xl border border-[hsl(265_80%_65%_/_0.36)] bg-[hsl(265_80%_65%_/_0.08)] p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[hsl(265_80%_65%_/_0.34)] bg-[hsl(265_80%_65%_/_0.12)]">
+                  <Users className="h-4 w-4 text-[hsl(265_80%_75%)]" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-black text-foreground">Your Referral Link</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Share and earn {referralBonus.toLocaleString()} MLTX tokens when a new account applies your code.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <a
+                  href={referralStats?.link ?? '#'}
+                  onClick={event => {
+                    if (!user) {
+                      event.preventDefault();
+                      requireAccount();
+                    }
+                  }}
+                  className="flex-1 rounded-xl border border-border bg-[hsl(224_15%_8%)] px-3 py-2 text-xs font-semibold text-foreground transition hover:border-[hsl(265_80%_65%_/_0.45)] focus:outline-none focus:ring-2 focus:ring-[hsl(265_80%_65%_/_0.35)]"
+                >
+                  <span className="block break-all">
+                    {user && referralStats ? referralStats.link : 'Create an account to generate your referral link'}
+                  </span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyReferral}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[hsl(265_80%_65%)] px-4 py-2 text-xs font-black text-white transition hover:bg-[hsl(265_80%_70%)]"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {copiedReferral ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <div className="rounded-xl border border-border bg-[hsl(224_15%_8%)] p-3 text-center">
+                  <p className="text-lg font-black text-[hsl(265_80%_75%)]">{referralStats?.totalReferrals ?? 0}</p>
+                  <p className="text-[10px] text-muted-foreground">Total Referrals</p>
+                </div>
+                <div className="rounded-xl border border-border bg-[hsl(224_15%_8%)] p-3 text-center">
+                  <p className="text-lg font-black text-[hsl(38_95%_60%)]">{referralStats?.tokensEarned ?? 0}</p>
+                  <p className="text-[10px] text-muted-foreground">Tokens Earned</p>
+                </div>
+                <div className="rounded-xl border border-border bg-[hsl(224_15%_8%)] p-3 text-center">
+                  <p className="text-lg font-black text-[hsl(142_70%_55%)]">{referralStats?.untilVip ?? 25}</p>
+                  <p className="text-[10px] text-muted-foreground">Until VIP</p>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleApplyReferral} className="rounded-2xl border border-border bg-[hsl(224_15%_8%)] p-4">
+              <h2 className="text-sm font-black text-foreground">Apply a Referral Code</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Enter a friend's code or paste their full referral link to get {referralBonus.toLocaleString()} bonus MLTX tokens.
+              </p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  value={referralInput}
+                  onChange={event => setReferralInput(event.target.value)}
+                  placeholder="Enter referral code or link..."
+                  className="min-h-11 flex-1 rounded-xl border border-border bg-[hsl(224_15%_10%)] px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-[hsl(265_80%_65%_/_0.55)]"
+                />
+                <button
+                  type="submit"
+                  className="rounded-xl bg-[hsl(265_80%_65%)] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[hsl(265_80%_70%)]"
+                >
+                  Apply
+                </button>
+              </div>
+              {referralStats?.appliedCode && (
+                <p className="mt-3 text-xs font-semibold text-[hsl(142_70%_55%)]">
+                  Applied code: {referralStats.appliedCode}
+                </p>
+              )}
+            </form>
+
+            <div className="rounded-2xl border border-border bg-[hsl(224_15%_8%)] p-4">
+              <h2 className="text-sm font-black text-foreground">Referral Rewards</h2>
+              <div className="mt-3 divide-y divide-border">
+                {[
+                  ['Friend signs up', `+${referralBonus.toLocaleString()} tokens each`],
+                  ['Friend applies your code', `+${referralBonus.toLocaleString()} tokens for them`],
+                  ['25 referrals', 'VIP Ambassador rate unlocked'],
+                ].map(([label, reward]) => (
+                  <div key={label} className="flex items-center justify-between gap-3 py-3 text-xs">
+                    <span className="text-muted-foreground">{label}</span>
+                    <span className="text-right font-black text-[hsl(265_80%_75%)]">{reward}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab !== 'overview' && activeTab !== 'referral' && (
           <section className="rounded-2xl border border-border bg-[hsl(224_15%_8%)] p-4">
             <div className="flex items-start gap-3">
               <ShoppingBag className="mt-0.5 h-4 w-4 text-[hsl(38_95%_60%)]" />
