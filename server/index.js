@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { RevenueAllocationError, allocateRevenue } from './revenueAllocation.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -291,6 +292,19 @@ app.post('/api/customer-portal', async (req, res) => {
   } catch (error) {
     const status = error.statusCode || 500;
     res.status(status).json({ error: error.message || 'Failed to create customer portal session' });
+  }
+});
+
+app.post('/api/revenue-allocation', (req, res) => {
+  try {
+    res.json(allocateRevenue(req.body));
+  } catch (error) {
+    if (error instanceof RevenueAllocationError) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
+
+    res.status(500).json({ error: 'Failed to allocate revenue' });
   }
 });
 
