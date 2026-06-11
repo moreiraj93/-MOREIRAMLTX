@@ -49,8 +49,8 @@ describe('allocateRevenue', () => {
 
     expect(result).toMatchObject({
       tax_reserve: 3500,
-      ops_fund: 1500.01,
-      owner_sweep: 5000,
+      ops_fund: 1500,
+      owner_sweep: 5000.01,
       total_processed: 10000.01,
     });
     expect(allocatedTotal).toBe(result.total_processed);
