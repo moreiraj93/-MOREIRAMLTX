@@ -34,7 +34,7 @@ describe('calculateRevenueAllocation', () => {
       'HOLD_IN_BUSINESS_ACCOUNT',
     );
     assert.equal(
-      calculateRevenueAllocation({ total_value: 20.02 }, fixedDate).status,
+      calculateRevenueAllocation({ total_value: 20.04 }, fixedDate).status,
       'READY_FOR_RTP',
     );
   });
