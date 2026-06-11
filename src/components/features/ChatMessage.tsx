@@ -104,7 +104,7 @@ function formatContent(text: string): React.ReactNode {
           <span className="text-[hsl(4_90%_58%)] mt-0.5 shrink-0">
             {line.startsWith('• ') || line.startsWith('- ') ? '·' : line.match(/^\d+/)?.[0] + '.'}
           </span>
-          <span>{line.replace(/^[•\-]\s|^\d+\.\s/, '').replace(/\*\*(.*?)\*\*/g, '$1')}</span>
+          <span>{line.replace(/^(?:•\s|-\s|\d+\.\s)/, '').replace(/\*\*(.*?)\*\*/g, '$1')}</span>
         </div>
       );
     }
