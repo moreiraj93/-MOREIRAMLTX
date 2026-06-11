@@ -412,7 +412,11 @@ export default function ImageGeneratorPanel({ initialMode = 'generate' }: ImageG
           voiceGenerate.start();
           return;
         }
-        voice.listening ? voice.stop() : voice.start();
+        if (voice.listening) {
+          voice.stop();
+        } else {
+          voice.start();
+        }
         break;
       case 'Reference Images':
         openReferencePicker('edit');
