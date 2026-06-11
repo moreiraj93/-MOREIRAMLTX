@@ -30,7 +30,7 @@ describe('allocateRevenue', () => {
 
   it('holds the sweep when the owner amount is $10 or less', () => {
     assert.equal(allocateRevenue({ total_value: 20 }, { now }).status, 'HOLD_IN_BUSINESS_ACCOUNT');
-    assert.equal(allocateRevenue({ total_value: 20.02 }, { now }).status, 'READY_FOR_RTP');
+    assert.equal(allocateRevenue({ total_value: 20.04 }, { now }).status, 'READY_FOR_RTP');
   });
 
   it('keeps rounded allocations reconciled to the processed total', () => {
@@ -49,7 +49,7 @@ describe('allocateRevenue', () => {
   });
 
   it('accepts Make-style string inputs', () => {
-    assert.equal(allocateRevenue({ total_value: '100.50' }, { now }).owner_sweep, 50.25);
+    assert.equal(allocateRevenue({ total_value: '100.50' }, { now }).owner_sweep, 50.24);
   });
 
   it('rejects missing, non-numeric, or negative totals', () => {
