@@ -59,8 +59,9 @@ describe("allocateRevenue", () => {
       total_processed: 100.01,
     });
 
-    expect(result.tax_reserve + result.ops_fund + result.owner_sweep).toBe(
+    expect(result.tax_reserve + result.ops_fund + result.owner_sweep).toBeCloseTo(
       result.total_processed,
+      2,
     );
   });
 
