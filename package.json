@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "test:allocation": "node --test tests/revenueAllocation.test.js",
     "preview": "vite preview",
     "start": "node server/index.js"
   },
