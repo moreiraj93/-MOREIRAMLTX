@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { calculateRevenueAllocation } from './revenueAllocation.js';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -202,6 +203,17 @@ app.post('/api/elevenlabs-tts', async (req, res) => {
   } catch (error) {
     const status = error.statusCode || 500;
     res.status(status).json({ error: error.message || 'Failed to generate speech' });
+  }
+});
+
+app.post('/api/revenue-allocation', (req, res) => {
+  try {
+    res.json(calculateRevenueAllocation(req.body));
+  } catch (error) {
+    const status = error instanceof TypeError || error instanceof RangeError ? 400 : 500;
+    res.status(status).json({
+      error: error.message || 'Failed to calculate revenue allocation',
+    });
   }
 });
 
